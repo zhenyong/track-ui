@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>The source code</title>
+  <link href="../resources/prettify/prettify.css" type="text/css" rel="stylesheet" />
+  <script type="text/javascript" src="../resources/prettify/prettify.js"></script>
+  <style type="text/css">
+    .highlight { display: block; background-color: #ddd; }
+  </style>
+  <script type="text/javascript">
+    function highlight() {
+      document.getElementById(location.hash.replace(/#/, "")).className = "highlight";
+    }
+  </script>
+</head>
+<body onload="prettyPrint(); highlight();">
+  <pre class="prettyprint lang-js">// @tag class
+<span id='Tk-Base'>/**
+</span> * @class Tk.Base
+ *
+ * 所有类的祖先
+ */
+
+&#39;use strict&#39;;
+
+Tk.Base = (function(flexSetter) {
+
+	var noArgs = [],
+		baseStaticMembers = [],
+		Base = function() {},
+		oneMember = {},
+		BasePrototype = Base.prototype;
+
+	Tk.apply(Base, {
+<span id='Tk-Base-static-method-create'>		/**
+</span>         * 创建该类的一个实例
+         *
+         *     Tk.define(&#39;My.cool.Class&#39;, {
+         *         ...
+         *     });
+         *
+         *     My.cool.Class.create({
+         *         someConfig: true
+         *     });
+         *
+         * 所有参数会传到类的构造方法中
+         *
+         * @return {Object} the created instance.
+         * @static
+         * @inheritable
+         */
+        create: function() {
+        	//相当于调用 Tk.create(this, data, createFn)
+            return Tk.create.apply(Tk, [this].concat(Array.prototype.slice.call(arguments, 0)));
+        },
+
+<span id='Tk-Base-static-method-extend'>        /**
+</span>         * @private
+         * @static
+         * @inheritable
+         * @param config
+         */
+        extend: function(parent) {
+            var me = this,
+                parentPrototype = parent.prototype,
+                prototype, i, ln, name, statics;
+
+            //me.prototype -&gt; 新对象 ———新对象._proto_——&gt; parent.prototype 
+            prototype = me.prototype = Tk.Object.chain(parentPrototype);
+            prototype.self = me;
+
+            me.superclass = prototype.superclass = parentPrototype;
+
+            /*
+            Tk管理的所有类都以 Base 为祖先
+            如果这里的 parent 不是通过 Tk 管理的类，可能缺少某些祖先的方法
+            这里会把祖先的基本方法拷贝
+             */
+            if (!parent.$isClass) {
+                for (i in BasePrototype) {
+                    if (i in prototype) {
+                        prototype[i] = BasePrototype[i];
+                    }
+                }
+            }
+
+            //拷贝父类可继承静态方法
+            //&lt;feature classSystem.inheritableStatics&gt;
+            // Statics inheritance
+            statics = parentPrototype.$inheritableStatics;
+
+            if (statics) {
+                for (i = 0,ln = statics.length; i &lt; ln; i++) {
+                    name = statics[i];
+
+                    if (!me.hasOwnProperty(name)) {
+                        me[name] = parent[name];
+                    }
+                }
+            }
+            //&lt;/feature&gt;
+
+            //TODO 忽略父类被继承的回调
+            // if (parent.$onTkended) {
+            //     me.$onTkended = parent.$onTkended.slice();
+            // }
+
+            //&lt;feature classSystem.config&gt;
+            // me.getConfigurator();//TODO 先不管高级 cofig 功能
+            //&lt;/feature&gt;
+        },
+
+<span id='Tk-Base-static-method-addStatics'>        /**
+</span>         * 添加 / 覆盖 类的静态属性或方法
+         *
+         *     Tk.define(&#39;My.cool.Class&#39;, {
+         *         ...
+         *     });
+         *
+         *     My.cool.Class.addStatics({
+         *         someProperty: &#39;someValue&#39;,      // My.cool.Class.someProperty = &#39;someValue&#39;
+         *         method1: function() { ... },    // My.cool.Class.method1 = function() { ... };
+         *         method2: function() { ... }     // My.cool.Class.method2 = function() { ... };
+         *     });
+         *
+         * @param {Object} members
+         * @return {Tk.Base} this
+         * @static
+         * @inheritable
+         */
+        addStatics: function (members) {
+            this.addMembers(members, true);
+            return this;
+        },
+
+<span id='Tk-Base-static-method-addInheritableStatics'>        /**
+</span>         * @private
+         * @static
+         * @inheritable
+         * @param {Object} members
+         */
+        addInheritableStatics: function(members) {
+            var inheritableStatics,
+                hasInheritableStatics,
+                prototype = this.prototype,
+                name, member;
+
+            inheritableStatics = prototype.$inheritableStatics;
+            hasInheritableStatics = prototype.$hasInheritableStatics;
+
+            if (!inheritableStatics) {
+                inheritableStatics = prototype.$inheritableStatics = [];
+                hasInheritableStatics = prototype.$hasInheritableStatics = {};
+            }
+
+            for (name in members) {
+                if (members.hasOwnProperty(name)) {
+                    member = members[name];
+           
+                    this[name] = member;
+
+                    if (!hasInheritableStatics[name]) {
+                        hasInheritableStatics[name] = true;
+                        inheritableStatics.push(name);
+                    }
+                }
+            }
+
+            return this;
+        },
+
+<span id='Tk-Base-static-method-addMembers'>      	/**
+</span>         * 对类的原型添加属性或者方法.
+         *
+         *     Tk.define(&#39;My.awesome.Cat&#39;, {
+         *         constructor: function() {
+         *             ...
+         *         }
+         *     });
+         *
+         *      My.awesome.Cat.addMembers({
+         *          meow: function() {
+         *             alert(&#39;Meowww...&#39;);
+         *          }
+         *      });
+         *
+         *      var kitty = new My.awesome.Cat();
+         *      kitty.meow();
+         *
+         * @param {Object} members 需要添加到该类的一些成员
+         * @param {Boolean} [isStatic=false] 如果为 `true` 表示这些成员是静态的.
+         * @param {Boolean} [privacy=false] 如果为 `true` 表示私有. 仅在调试模式下对方法成员有效
+         * @static
+         * @inheritable
+         */
+        addMembers: function (members, isStatic, privacy) {
+            var me = this, // this class
+                cloneFunction = Tk.Function.clone,
+                target = isStatic ? me : me.prototype,
+                defaultConfig = !isStatic &amp;&amp; target.defaultConfig,
+                enumerables = Tk.enumerables,
+                privates = members.privates,
+                configs, i, ln, member, name, subPrivacy, privateStatics;
+
+            //&lt;debug&gt;
+            var displayName = (me.$className || &#39;&#39;) + &#39;#&#39;;
+            //&lt;/debug&gt;
+
+            if (privates) {
+                // This won&#39;t run for normal class private members but will pick up all
+                // others (statics, overrides, etc).
+                delete members.privates;
+                if (!isStatic) {
+                    privateStatics = privates.statics;
+                    delete privates.statics;
+                }
+                
+                //&lt;debug&gt;
+                subPrivacy = privates.privacy || privacy || &#39;framework&#39;;
+                //&lt;/debug&gt;
+
+                me.addMembers(privates, isStatic, subPrivacy);
+                if (privateStatics) {
+                    me.addMembers(privateStatics, true, subPrivacy);
+                }
+            }
+
+            for (name in members) {
+                if (members.hasOwnProperty(name)) {
+                    member = members[name];
+
+                    if (typeof member === &#39;function&#39; &amp;&amp; !member.$isClass &amp;&amp; !member.$nullFn) {
+                    	//如果方法属于某个类的，要拷贝一份，避免污染
+                        if (member.$owner) {
+                            member = cloneFunction(member);
+                        }
+
+                        if (target.hasOwnProperty(name)) {
+                            member.$previous = target[name];
+                        }
+
+                        // 这部分信息用在 callParent() , callSuper() , statics() ,Tk.fly().
+                        member.$owner = me;
+                        member.$name = name;
+
+                    //如果类的默认 config 和 成员都有同个属性名，那么会优先应用到 config 上
+                    } else if (defaultConfig &amp;&amp; (name in defaultConfig) &amp;&amp; !target.config.hasOwnProperty(name)) {
+                        // This is a config property so it must be added to the configs
+                        // collection not just smashed on the prototype...
+                        (configs || (configs = {}))[name] = member;
+                        continue;
+                    }
+
+                    target[name] = member;
+                }
+            }
+
+            if (configs) {
+                // 把 members 里面跟类的 config 相关的属性，但是目前还没有配置的，添加到配置里
+                // me.addConfig(configs);//TODO 先不管配置
+            }
+
+            if (enumerables) {
+                for (i = 0, ln = enumerables.length; i &lt; ln; ++i) {
+                    if (members.hasOwnProperty(name = enumerables[i])) {
+                        member = members[name];
+
+                        // The enumerables are all functions...
+                        if (member &amp;&amp; !member.$nullFn) {
+                            if (member.$owner) {
+                                member = cloneFunction(member);
+                            }
+
+                            member.$owner = me;
+                            member.$name = name;
+                            //&lt;debug&gt;
+                            member.name = displayName + name;
+                            //&lt;/debug&gt;
+
+                            if (target.hasOwnProperty(name)) {
+                                member.$previous = target[name];
+                            }
+                        }
+
+                        target[name] = member;
+                    }
+                }
+            }
+
+            return this;
+        },
+
+<span id='Tk-Base-static-method-addMember'>        /**
+</span>         * @private
+         * @static
+         * @inheritable
+         * @param name
+         * @param member
+         */
+        addMember: function (name, member) {
+            oneMember[name] = member;
+            this.addMembers(oneMember);
+            delete oneMember[name];
+            return this;
+        },
+
+<span id='Tk-Base-static-method-callParent'>        /**
+</span>         * 继承链上所有父类方法从子类开始调用到祖先
+         * 
+         * @protected
+         * @static
+         * @inheritable
+         */
+        callParent: function(args) {
+            var method;
+
+            // This code is intentionally inlined for the least amount of debugger stepping
+            return (method = this.callParent.caller) &amp;&amp; (method.$previous ||
+                  ((method = method.$owner ? method : method.caller) &amp;&amp;
+                        method.$owner.superclass.self[method.$name])).apply(this, args || noArgs);
+        },
+
+<span id='Tk-Base-static-method-callSuper'>        /**
+</span>         * 调用祖先的同名方法
+         * 
+         * @protected
+         * @static
+         * @inheritable
+         */
+        callSuper: function(args) {
+            var method;
+
+            // This code is intentionally inlined for the least amount of debugger stepping
+            return (method = this.callSuper.caller) &amp;&amp;
+                    ((method = method.$owner ? method : method.caller) &amp;&amp;
+                      method.$owner.superclass.self[method.$name]).apply(this, args || noArgs);
+        },
+
+<span id='Tk-Base-static-method-mixin'>        /**
+</span>         *  mixins 预处理器使用
+         * @private
+         * @static
+         * @inheritable
+         */
+        mixin: function(name, mixinClass) {
+            var me = this,
+                mixin, prototype, key, statics, i, ln, staticName, mixinValue, mixins;
+
+            if (typeof name !== &#39;string&#39;) {
+                mixins = name;
+                if (mixins instanceof Array) {
+                    for (i = 0,ln = mixins.length; i &lt; ln; i++) {
+                        mixin = mixins[i];
+                        me.mixin(mixin.prototype.mixinId || mixin.$className, mixin);
+                    }
+                } else {
+                    // Not a string or array - process the object form:
+                    // mixins: {
+                    //     foo: ...
+                    // }
+                    for (var mixinName in mixins) {
+                        me.mixin(mixinName, mixins[mixinName]);
+                    }
+                }
+                return;
+            }
+
+            mixin = mixinClass.prototype;
+            prototype = me.prototype;
+
+            //TODO 重点研究 observable
+            if (mixin.onClassMixedIn) {
+                mixin.onClassMixedIn.call(mixinClass, me);
+            }
+
+            if (!prototype.hasOwnProperty(&#39;mixins&#39;)) {
+                if (&#39;mixins&#39; in prototype) {
+                    prototype.mixins = Tk.Object.chain(prototype.mixins);
+                }
+                else {
+                    prototype.mixins = {};
+                }
+            }
+
+            for (key in mixin) {
+                mixinValue = mixin[key];
+                if (key === &#39;mixins&#39;) {
+                	//如果两个父类包含同一个 mixin，那么只应用第一个
+                    Tk.applyIf(prototype.mixins, mixinValue);
+                }
+                else if (!(key === &#39;mixinId&#39; || key === &#39;config&#39;) &amp;&amp; (prototype[key] === undefined)) {
+                    prototype[key] = mixinValue;
+                }
+            }
+
+            //&lt;feature classSystem.inheritableStatics&gt;
+            // Mixin statics inheritance
+            statics = mixin.$inheritableStatics;
+
+            if (statics) {
+                for (i = 0, ln = statics.length; i &lt; ln; i++) {
+                    staticName = statics[i];
+
+                    if (!me.hasOwnProperty(staticName)) {
+                        me[staticName] = mixinClass[staticName];
+                    }
+                }
+            }
+            //&lt;/feature&gt;
+
+            //&lt;feature classSystem.config&gt;
+            //TODO 先不支持 config
+            // if (&#39;config&#39; in mixin) {
+            //     me.addConfig(mixin.config, mixinClass);
+            // }
+            //&lt;/feature&gt;
+
+            prototype.mixins[name] = mixin;
+
+            if (mixin.afterClassMixedIn) {
+                mixin.afterClassMixedIn.call(mixinClass, me);
+            }
+
+            return me;
+        }
+
+
+	});
+
+	Base.$staticMembers = baseStaticMembers;
+
+	//TODO 先不支持 config
+    //&lt;feature classSystem.config&gt;
+    // Base.getConfigurator(); // lazily create now so as not capture in $staticMembers
+    //&lt;/feature&gt;
+
+	return Base;
+
+}(Tk.Function.flexSetter));</pre>
+</body>
+</html>

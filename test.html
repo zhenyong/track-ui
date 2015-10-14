@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title></title>
+</head>
+<body>
+<script type="text/javascript" src="./jquery-1.11.3.js"></script>
+<script type="text/javascript" src="./core/Tk.js"></script>
+
+<!-- lang -->
+<script type="text/javascript" src="./core/lang/Function.js"></script>
+<script type="text/javascript" src="./core/lang/Array.js"></script>
+<script type="text/javascript" src="./core/lang/Object.js"></script>
+
+<!-- class -->
+<script type="text/javascript" src="./core/class/Config.js"></script>
+<script type="text/javascript" src="./core/class/Configurator.js"></script>
+<script type="text/javascript" src="./core/class/Base.js"></script>
+<script type="text/javascript" src="./core/class/Class.js"></script>
+<script type="text/javascript" src="./core/class/Inventory.js"></script>
+<script type="text/javascript" src="./core/class/ClassManager.js"></script>
+<script type="text/javascript" src="./core/class/Mixin.js"></script>
+
+<script type="text/javascript">
+Tk.define('CanSing', {
+	sing: function () {
+		console.log('sing');
+	}
+});
+
+Tk.define('China', {
+	constructor: function () {
+		console.log('constructor China');
+	}
+});
+
+Tk.define('Person', {
+	mixins: [CanSing],
+	extend: China,//TODO 字符串
+	constructor: function () {
+		this.callParent();
+		console.log('constructor China');
+	}
+});
+
+var person = new Person();
+person.sing()
+</script>
+
+</body>
+</html>

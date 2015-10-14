@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>The source code</title>
+  <link href="../resources/prettify/prettify.css" type="text/css" rel="stylesheet" />
+  <script type="text/javascript" src="../resources/prettify/prettify.js"></script>
+  <style type="text/css">
+    .highlight { display: block; background-color: #ddd; }
+  </style>
+  <script type="text/javascript">
+    function highlight() {
+      document.getElementById(location.hash.replace(/#/, "")).className = "highlight";
+    }
+  </script>
+</head>
+<body onload="prettyPrint(); highlight();">
+  <pre class="prettyprint lang-js">&#39;use strict&#39;;
+<span id='Tk'>/**
+</span> * @class Tk
+ */
+(function(global) {
+
+	var Tk = global.Tk = global.Tk || {global:global}; //全局命名空间
+
+	var objectPrototype = Object.prototype,
+		toString = objectPrototype.toString,
+		enumerables = [&#39;valueOf&#39;, &#39;toLocaleString&#39;, &#39;toString&#39;, &#39;constructor&#39;], i;
+	
+<span id='Tk-property-apply'>	/**
+</span>	 * 参考 ref [jquery#extend](http://api.jquery.com/jQuery.extend/)
+	 *
+	 */
+	Tk.apply = $.extend;
+
+	Tk.apply(Tk, {
+
+<span id='Tk-method-isArray'>		/**
+</span>		 * 判断输入值是否&quot;像数组&quot;，像则返回 true，包括 `arguments` `NodeList`都算
+		 *
+		 * @param {Object} target 
+		 * @return {Boolean}
+		 * @method
+		 */
+		isArray: (&#39;isArray&#39; in Array) ? Array.isArray : function(value) {
+			return toString.call(value) === &#39;[object Array]&#39;;
+		}
+	});
+
+	for (i in { toString: 1 }) {
+		//如果能够遍历到 `toString` 这类特定属性
+		//那么以后遍历属性就不需要对这些特定属性作额外遍历
+        enumerables = null;
+    }
+
+<span id='Tk-property-enumerables'>    /**
+</span>     * 对于老的浏览器，某些特定的属性无法遍历，这里存放哪些无法遍历的属性名
+     * @property {String[]}
+     */
+    Tk.enumerables = enumerables;
+
+})(window);
+</pre>
+</body>
+</html>

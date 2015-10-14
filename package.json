@@ -1,0 +1,29 @@
+{
+  "name": "track-ui",
+  "version": "1.0.0",
+  "description": "//TODO 代码里面的 todo 要搞完 //TODO 去掉现有的 <debug> 的代码 ## 编码规范",
+  "main": "jquery-1.11.3.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zhenyong/track-ui.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/zhenyong/track-ui/issues"
+  },
+  "homepage": "https://github.com/zhenyong/track-ui#readme",
+  "dependencies": {
+    "gulp": "^3.9.0",
+    "gulp-concat": "^2.6.0",
+    "gulp-uglify": "^1.4.2",
+    "gulp-watch": "^4.3.5",
+    "rimraf": "^2.4.3"
+  }
+}

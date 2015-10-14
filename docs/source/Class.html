@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>The source code</title>
+  <link href="../resources/prettify/prettify.css" type="text/css" rel="stylesheet" />
+  <script type="text/javascript" src="../resources/prettify/prettify.js"></script>
+  <style type="text/css">
+    .highlight { display: block; background-color: #ddd; }
+  </style>
+  <script type="text/javascript">
+    function highlight() {
+      document.getElementById(location.hash.replace(/#/, "")).className = "highlight";
+    }
+  </script>
+</head>
+<body onload="prettyPrint(); highlight();">
+  <pre class="prettyprint lang-js"><span id='Tk-Class'>/**
+</span> * @class Tk.Class
+ * 
+ */
+
+&quot;use strict&quot;;
+
+<span id='Tk-Class'>/**
+</span> * @class  Tk.Class
+ * @method 构造函数
+ * 创建一个匿名类
+ *
+ * @param {Object} data 一个键值对，表示类的属性和方法
+ * @param {Function} [onCreated] 类完整创建完之后执行回调
+ * 某些 预处理器 会让类的创建以异步的方式完成
+ *
+ * @return {Tk.Base} The newly created class
+ */
+
+(function() {
+
+	var TkClass,
+        Base = Tk.Base,
+        baseStaticMembers = Base.$staticMembers;
+
+
+	// 创建一个构造函数，函数内只是调用本身的构造方法
+    function makeCtor (className) {
+        function constructor () {
+        	/* jshint validthis:true */
+            return this.constructor.apply(this, arguments) || null;
+        }
+        return constructor;
+    }
+
+	Tk.Class = TkClass = function(Class, data, onCreated) {
+		if (typeof Class != &#39;function&#39;) {
+			onCreated = data;
+			data = Class;
+			Class = null;
+		}
+
+		if (!data) {
+			data = {};
+		}
+
+		Class = TkClass.create(Class, data);
+
+		//TODO 先不管回调
+		// TkClass.process(Class, data, onCreated);
+
+		return Class;
+	};
+
+	Tk.apply(TkClass, {
+		makeCtor: makeCtor,
+
+<span id='Tk-Class-method-create'>		/**
+</span>         * @private
+         */
+        create: function (Class, data) {
+            var i = baseStaticMembers.length,
+                name;
+
+            if (!Class) {
+                Class = makeCtor();
+            }
+
+            while (i--) {
+                name = baseStaticMembers[i];
+                Class[name] = Base[name];
+            }
+
+            return Class;
+        }
+	});
+
+})();
+
+</pre>
+</body>
+</html>

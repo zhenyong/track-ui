@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>The source code</title>
+  <link href="../resources/prettify/prettify.css" type="text/css" rel="stylesheet" />
+  <script type="text/javascript" src="../resources/prettify/prettify.js"></script>
+  <style type="text/css">
+    .highlight { display: block; background-color: #ddd; }
+  </style>
+  <script type="text/javascript">
+    function highlight() {
+      document.getElementById(location.hash.replace(/#/, "")).className = "highlight";
+    }
+  </script>
+</head>
+<body onload="prettyPrint(); highlight();">
+  <pre class="prettyprint lang-js"><span id='Tk-Object'>/**
+</span> * @class Tk.Object
+ *
+ * 一堆处理对象的静态方法
+ *
+ * @singleton
+ */
+&#39;use strict&#39;;
+
+// The &quot;constructor&quot; for chain:
+var TemplateClass = function() {},
+	TkObject = Tk.Object = {
+
+<span id='Tk-Object-method-chain'>		/**
+</span>		 * @method
+		 * 返回一个新对象，把参数对象 `object` 作为新对象的原型链对象。
+		 *
+		 * 场景：
+		 *
+		 * - 需要拷贝一个对象，以后修改这个新对象的属性的时候不会污染到原对象的同名属性
+		 * 
+		 * @param {Object} object 新对象的原型链指向该对象
+		 */
+		chain: Object.create || function(object) {
+			TemplateClass.prototype = object;
+			var result = new TemplateClass();
+			TemplateClass.prototype = null;
+			return result;
+		}
+	};</pre>
+</body>
+</html>
