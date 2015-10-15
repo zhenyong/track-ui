@@ -10,7 +10,10 @@ rimraf.sync('dist');
 gulp.task('default', function() {
   // place code for your default task here
 });
-var CORE_SRC = ['core/**/*.js'];
+var CORE_SRC = [
+  'src/core/**/*.js',
+  'src/ui/**/*.js'
+];
  
 gulp.task('compress', function() {
 
@@ -31,4 +34,4 @@ gulp.task('watch', function() {
 
 });
 
-gulp.start('compress');
+// gulp.start('compress');

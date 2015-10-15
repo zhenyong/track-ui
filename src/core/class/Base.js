@@ -1,23 +1,6 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-  <title>The source code</title>
-  <link href="../resources/prettify/prettify.css" type="text/css" rel="stylesheet" />
-  <script type="text/javascript" src="../resources/prettify/prettify.js"></script>
-  <style type="text/css">
-    .highlight { display: block; background-color: #ddd; }
-  </style>
-  <script type="text/javascript">
-    function highlight() {
-      document.getElementById(location.hash.replace(/#/, "")).className = "highlight";
-    }
-  </script>
-</head>
-<body onload="prettyPrint(); highlight();">
-  <pre class="prettyprint lang-js">// @tag class
-<span id='Tk-Base'>/**
-</span> * @class Tk.Base
+// @tag class
+/**
+ * @class Tk.Base
  *
  * 所有类的祖先 {@link Tk#define}.
  *
@@ -47,15 +30,15 @@ Tk.Base = (function(flexSetter) {
 
     // These static properties will be copied to every newly created class with {@link Tk#define}
     Tk.apply(Base, {
-        $className: &#39;Tk.Base&#39;,
+        $className: 'Tk.Base',
 
         $isClass: true,
 
-<span id='Tk-Base-static-method-create'>        /**
-</span>         * 创建一个当前类的实例
+        /**
+         * 创建一个当前类的实例
          * Create a new instance of this Class.
          *
-         *     Tk.define(&#39;My.cool.Class&#39;, {
+         *     Tk.define('My.cool.Class', {
          *         ...
          *     });
          *
@@ -69,8 +52,8 @@ Tk.Base = (function(flexSetter) {
             return Tk.create.apply(Tk, [this].concat(Array.prototype.slice.call(arguments, 0)));
         },
 
-<span id='Tk-Base-static-method-extend'>        /**
-</span>         * @private
+        /**
+         * @private
          * @static
          * @inheritable
          * @param config
@@ -93,12 +76,12 @@ Tk.Base = (function(flexSetter) {
                 }
             }
 
-            //&lt;feature classSystem.inheritableStatics&gt;
+            //<feature classSystem.inheritableStatics>
             // Statics inheritance
             statics = parentPrototype.$inheritableStatics;
 
             if (statics) {
-                for (i = 0, ln = statics.length; i &lt; ln; i++) {
+                for (i = 0, ln = statics.length; i < ln; i++) {
                     name = statics[i];
 
                     if (!me.hasOwnProperty(name)) {
@@ -106,22 +89,22 @@ Tk.Base = (function(flexSetter) {
                     }
                 }
             }
-            //&lt;/feature&gt;
+            //</feature>
 
             if (parent.$onExtended) {
                 me.$onExtended = parent.$onExtended.slice();
             }
         },
 
-<span id='Tk-Base-static-property-S-onExtended'>        /**
-</span>         * @private
+        /**
+         * @private
          * @static
          * @inheritable
          */
         $onExtended: [],
 
-<span id='Tk-Base-static-method-triggerExtended'>        /**
-</span>         * @private
+        /**
+         * @private
          * @static
          * @inheritable
          */
@@ -130,16 +113,16 @@ Tk.Base = (function(flexSetter) {
                 ln = callbacks.length,
                 i, callback;
 
-            if (ln &gt; 0) {
-                for (i = 0; i &lt; ln; i++) {
+            if (ln > 0) {
+                for (i = 0; i < ln; i++) {
                     callback = callbacks[i];
                     callback.fn.apply(callback.scope || this, arguments);
                 }
             }
         },
 
-<span id='Tk-Base-static-method-onExtended'>        /**
-</span>         * @private
+        /**
+         * @private
          * @static
          * @inheritable
          */
@@ -152,15 +135,15 @@ Tk.Base = (function(flexSetter) {
             return this;
         },
 
-<span id='Tk-Base-static-method-addStatics'>        /**
-</span>         * 添加 或者 重载 这个类的静态成员
+        /**
+         * 添加 或者 重载 这个类的静态成员
          *
-         *     Tk.define(&#39;My.cool.Class&#39;, {
+         *     Tk.define('My.cool.Class', {
          *         ...
          *     });
          *
          *     My.cool.Class.addStatics({
-         *         someProperty: &#39;someValue&#39;,      // My.cool.Class.someProperty = &#39;someValue&#39;
+         *         someProperty: 'someValue',      // My.cool.Class.someProperty = 'someValue'
          *         method1: function() { ... },    // My.cool.Class.method1 = function() { ... };
          *         method2: function() { ... }     // My.cool.Class.method2 = function() { ... };
          *     });
@@ -175,8 +158,8 @@ Tk.Base = (function(flexSetter) {
             return this;
         },
 
-<span id='Tk-Base-static-method-addInheritableStatics'>        /**
-</span>         * @private
+        /**
+         * @private
          * @static
          * @inheritable
          * @param {Object} members
@@ -210,10 +193,10 @@ Tk.Base = (function(flexSetter) {
             return this;
         },
 
-<span id='Tk-Base-static-method-addMembers'>        /**
-</span>         * 对类的原型添加方法或者属性
+        /**
+         * 对类的原型添加方法或者属性
          *
-         *     Tk.define(&#39;My.awesome.Cat&#39;, {
+         *     Tk.define('My.awesome.Cat', {
          *         constructor: function() {
          *             ...
          *         }
@@ -221,7 +204,7 @@ Tk.Base = (function(flexSetter) {
          *
          *      My.awesome.Cat.addMembers({
          *          meow: function() {
-         *             alert(&#39;Meowww...&#39;);
+         *             alert('Meowww...');
          *          }
          *      });
          *
@@ -238,13 +221,13 @@ Tk.Base = (function(flexSetter) {
             var me = this, // 这个类
                 cloneFunction = Tk.Function.clone,
                 target = isStatic ? me : me.prototype,
-                defaultConfig = !isStatic &amp;&amp; target.defaultConfig,
+                defaultConfig = !isStatic && target.defaultConfig,
                 enumerables = Tk.enumerables,
                 privates = members.privates,
                 configs, i, ln, member, name, subPrivacy, privateStatics;
 
             if (privates) {
-                // This won&#39;t run for normal class private members but will pick up all
+                // This won't run for normal class private members but will pick up all
                 // others (statics, overrides, etc).
                 delete members.privates;
                 if (!isStatic) {
@@ -262,7 +245,7 @@ Tk.Base = (function(flexSetter) {
                 if (members.hasOwnProperty(name)) {
                     member = members[name];
 
-                    if (typeof member === &#39;function&#39; &amp;&amp; !member.$isClass &amp;&amp; !member.$nullFn) {
+                    if (typeof member === 'function' && !member.$isClass && !member.$nullFn) {
                         if (member.$owner) {
                             member = cloneFunction(member);
                         }
@@ -285,12 +268,12 @@ Tk.Base = (function(flexSetter) {
             }
 
             if (enumerables) {
-                for (i = 0, ln = enumerables.length; i &lt; ln; ++i) {
+                for (i = 0, ln = enumerables.length; i < ln; ++i) {
                     if (members.hasOwnProperty(name = enumerables[i])) {
                         member = members[name];
 
                         // The enumerables are all functions...
-                        if (member &amp;&amp; !member.$nullFn) {
+                        if (member && !member.$nullFn) {
                             if (member.$owner) {
                                 member = cloneFunction(member);
                             }
@@ -311,8 +294,8 @@ Tk.Base = (function(flexSetter) {
             return this;
         },
 
-<span id='Tk-Base-static-method-addMember'>        /**
-</span>         * @private
+        /**
+         * @private
          * @static
          * @inheritable
          * @param name
@@ -325,41 +308,41 @@ Tk.Base = (function(flexSetter) {
             return this;
         },
 
-<span id='Tk-Base-static-method-override'>        /**
-</span>         * Override members of this class. Overridden methods can be invoked via
+        /**
+         * Override members of this class. Overridden methods can be invoked via
          * {@link Tk.Base#callParent}.
          *
-         *     Tk.define(&#39;My.Cat&#39;, {
+         *     Tk.define('My.Cat', {
          *         constructor: function() {
-         *             alert(&quot;I&#39;m a cat!&quot;);
+         *             alert("I'm a cat!");
          *         }
          *     });
          *
          *     My.Cat.override({
          *         constructor: function() {
-         *             alert(&quot;I&#39;m going to be a cat!&quot;);
+         *             alert("I'm going to be a cat!");
          *
          *             this.callParent(arguments);
          *
-         *             alert(&quot;Meeeeoooowwww&quot;);
+         *             alert("Meeeeoooowwww");
          *         }
          *     });
          *
-         *     var kitty = new My.Cat(); // alerts &quot;I&#39;m going to be a cat!&quot;
-         *                               // alerts &quot;I&#39;m a cat!&quot;
-         *                               // alerts &quot;Meeeeoooowwww&quot;
+         *     var kitty = new My.Cat(); // alerts "I'm going to be a cat!"
+         *                               // alerts "I'm a cat!"
+         *                               // alerts "Meeeeoooowwww"
          *
          * Direct use of this method should be rare. Use {@link Tk#define Tk.define}
          * instead:
          *
-         *     Tk.define(&#39;My.CatOverride&#39;, {
-         *         override: &#39;My.Cat&#39;,
+         *     Tk.define('My.CatOverride', {
+         *         override: 'My.Cat',
          *         constructor: function() {
-         *             alert(&quot;I&#39;m going to be a cat!&quot;);
+         *             alert("I'm going to be a cat!");
          *
          *             this.callParent(arguments);
          *
-         *             alert(&quot;Meeeeoooowwww&quot;);
+         *             alert("Meeeeoooowwww");
          *         }
          *     });
          *
@@ -404,35 +387,35 @@ Tk.Base = (function(flexSetter) {
             return me;
         },
 
-<span id='Tk-Base-static-method-callParent'>        /**
-</span>         * @protected
+        /**
+         * @protected
          * @static
          * @inheritable
          */
         callParent: function(args) {
             var method;
 
-            return (method = this.callParent.caller) &amp;&amp; (method.$previous ||
-                ((method = method.$owner ? method : method.caller) &amp;&amp;
+            return (method = this.callParent.caller) && (method.$previous ||
+                ((method = method.$owner ? method : method.caller) &&
                     method.$owner.superclass.self[method.$name])).apply(this, args || noArgs);
         },
 
-<span id='Tk-Base-static-method-callSuper'>        /**
-</span>         * @protected
+        /**
+         * @protected
          * @static
          * @inheritable
          */
         callSuper: function(args) {
             var method;
 
-            return (method = this.callSuper.caller) &amp;&amp;
-                ((method = method.$owner ? method : method.caller) &amp;&amp;
+            return (method = this.callSuper.caller) &&
+                ((method = method.$owner ? method : method.caller) &&
                     method.$owner.superclass.self[method.$name]).apply(this, args || noArgs);
         },
 
-        //&lt;feature classSystem.mixins&gt;
-<span id='Tk-Base-static-method-mixin'>        /**
-</span>         * Used internally by the mixins pre-processor
+        //<feature classSystem.mixins>
+        /**
+         * Used internally by the mixins pre-processor
          * @private
          * @static
          * @inheritable
@@ -441,10 +424,10 @@ Tk.Base = (function(flexSetter) {
             var me = this,
                 mixin, prototype, key, statics, i, ln, staticName, mixinValue, mixins;
 
-            if (typeof name !== &#39;string&#39;) {
+            if (typeof name !== 'string') {
                 mixins = name;
                 if (mixins instanceof Array) {
-                    for (i = 0, ln = mixins.length; i &lt; ln; i++) {
+                    for (i = 0, ln = mixins.length; i < ln; i++) {
                         mixin = mixins[i];
                         me.mixin(mixin.prototype.mixinId || mixin.$className, mixin);
                     }
@@ -467,8 +450,8 @@ Tk.Base = (function(flexSetter) {
                 mixin.onClassMixedIn.call(mixinClass, me);
             }
 
-            if (!prototype.hasOwnProperty(&#39;mixins&#39;)) {
-                if (&#39;mixins&#39; in prototype) {
+            if (!prototype.hasOwnProperty('mixins')) {
+                if ('mixins' in prototype) {
                     prototype.mixins = Tk.Object.chain(prototype.mixins);
                 } else {
                     prototype.mixins = {};
@@ -477,20 +460,20 @@ Tk.Base = (function(flexSetter) {
 
             for (key in mixin) {
                 mixinValue = mixin[key];
-                if (key === &#39;mixins&#39;) {
+                if (key === 'mixins') {
                     // 如果两个父类使用了同一个 mixin，那么以第一个为主，后面的不考虑
                     Tk.applyIf(prototype.mixins, mixinValue);
-                } else if (!(key === &#39;mixinId&#39; || key === &#39;config&#39;) &amp;&amp; (prototype[key] === undefined)) {
+                } else if (!(key === 'mixinId' || key === 'config') && (prototype[key] === undefined)) {
                     prototype[key] = mixinValue;
                 }
             }
 
-            //&lt;feature classSystem.inheritableStatics&gt;
+            //<feature classSystem.inheritableStatics>
             // 混合 静态方法
             statics = mixin.$inheritableStatics;
 
             if (statics) {
-                for (i = 0, ln = statics.length; i &lt; ln; i++) {
+                for (i = 0, ln = statics.length; i < ln; i++) {
                     staticName = statics[i];
 
                     if (!me.hasOwnProperty(staticName)) {
@@ -498,7 +481,7 @@ Tk.Base = (function(flexSetter) {
                     }
                 }
             }
-            //&lt;/feature&gt;
+            //</feature>
 
             prototype.mixins[name] = mixin;
 
@@ -508,18 +491,18 @@ Tk.Base = (function(flexSetter) {
 
             return me;
         },
-        //&lt;/feature&gt;
+        //</feature>
 
-<span id='Tk-Base-static-method-getName'>        /**
-</span>         * 获取当前类的字符串类名
+        /**
+         * 获取当前类的字符串类名
          *
-         *     Tk.define(&#39;My.cool.Class&#39;, {
+         *     Tk.define('My.cool.Class', {
          *         constructor: function() {
-         *             alert(this.self.getName()); // alerts &#39;My.cool.Class&#39;
+         *             alert(this.self.getName()); // alerts 'My.cool.Class'
          *         }
          *     });
          *
-         *     My.cool.Class.getName(); // &#39;My.cool.Class&#39;
+         *     My.cool.Class.getName(); // 'My.cool.Class'
          *
          * @return {String} className
          * @static
@@ -541,47 +524,47 @@ Tk.Base = (function(flexSetter) {
     Base.$staticMembers = baseStaticMembers;
 
     Base.addMembers({
-<span id='Tk-Base-property-S-className'>        /** @private */
-</span>        $className: &#39;Tk.Base&#39;,
+        /** @private */
+        $className: 'Tk.Base',
 
-<span id='Tk-Base-property-isInstance'>        /**
-</span>         * @property {Boolean} isInstance
+        /**
+         * @property {Boolean} isInstance
          * 用来区分字面量对象和类实例对象
          * @protected
          * @readonly
          */
         isInstance: true,
 
-<span id='Tk-Base-property-destroyed'>        /**
-</span>         * @property {Boolean} destroyed
+        /**
+         * @property {Boolean} destroyed
          * `destroy` 方法调用后设置为 `true` 
          * @protected
          */
         destroyed: false,
 
-<span id='Tk-Base-method-statics'>        /**
-</span>         * 如果在某个类的方法内调用 `this.statics()` 返回该个类的静态成员，与作用于无关，无论 `this` 指向谁
+        /**
+         * 如果在某个类的方法内调用 `this.statics()` 返回该个类的静态成员，与作用于无关，无论 `this` 指向谁
          * 如果不是在方法内调用 `this.statics()`，那么实例 this 对应的
          * 
-         *     Tk.define(&#39;My.Cat&#39;, {
+         *     Tk.define('My.Cat', {
          *         statics: {
          *             totalCreated: 0,
-         *             speciesName: &#39;Cat&#39; // My.Cat.speciesName = &#39;Cat&#39;
+         *             speciesName: 'Cat' // My.Cat.speciesName = 'Cat'
          *         },
          *
          *         constructor: function() {
          *             var statics = this.statics();
          *
-         *             alert(statics.speciesName);     // always equals to &#39;Cat&#39; no matter what &#39;this&#39; refers to
+         *             alert(statics.speciesName);     // always equals to 'Cat' no matter what 'this' refers to
          *                                             // equivalent to: My.Cat.speciesName
          *
-         *             alert(this.self.speciesName);   // dependent on &#39;this&#39;
+         *             alert(this.self.speciesName);   // dependent on 'this'
          *
          *             statics.totalCreated++;
          *         },
          *
          *         clone: function() {
-         *             var cloned = new this.self();   // dependent on &#39;this&#39;
+         *             var cloned = new this.self();   // dependent on 'this'
          *
          *             cloned.groupName = this.statics().speciesName;   // equivalent to: My.Cat.speciesName
          *
@@ -590,11 +573,11 @@ Tk.Base = (function(flexSetter) {
          *     });
          *
          *
-         *     Tk.define(&#39;My.SnowLeopard&#39;, {
-         *         extend: &#39;My.Cat&#39;,
+         *     Tk.define('My.SnowLeopard', {
+         *         extend: 'My.Cat',
          *
          *         statics: {
-         *             speciesName: &#39;Snow Leopard&#39;     // My.SnowLeopard.speciesName = &#39;Snow Leopard&#39;
+         *             speciesName: 'Snow Leopard'     // My.SnowLeopard.speciesName = 'Snow Leopard'
          *         },
          *
          *         constructor: function() {
@@ -602,13 +585,13 @@ Tk.Base = (function(flexSetter) {
          *         }
          *     });
          *
-         *     var cat = new My.Cat();                 // alerts &#39;Cat&#39;, then alerts &#39;Cat&#39;
+         *     var cat = new My.Cat();                 // alerts 'Cat', then alerts 'Cat'
          *
-         *     var snowLeopard = new My.SnowLeopard(); // alerts &#39;Cat&#39;, then alerts &#39;Snow Leopard&#39;
+         *     var snowLeopard = new My.SnowLeopard(); // alerts 'Cat', then alerts 'Snow Leopard'
          *
          *     var clone = snowLeopard.clone();
-         *     alert(Tk.getClassName(clone));         // alerts &#39;My.SnowLeopard&#39;
-         *     alert(clone.groupName);                 // alerts &#39;Cat&#39;
+         *     alert(Tk.getClassName(clone));         // alerts 'My.SnowLeopard'
+         *     alert(clone.groupName);                 // alerts 'Cat'
          *
          *     alert(My.Cat.totalCreated);             // alerts 3
          *
@@ -626,11 +609,11 @@ Tk.Base = (function(flexSetter) {
             return method.$owner;
         },
 
-<span id='Tk-Base-method-callParent'>        /**
-</span>         * Call the &quot;parent&quot; method of the current method. That is the method previously
+        /**
+         * Call the "parent" method of the current method. That is the method previously
          * overridden by derivation or by an override (see {@link Tk#define}).
          *
-         *      Tk.define(&#39;My.Base&#39;, {
+         *      Tk.define('My.Base', {
          *          constructor: function (x) {
          *              this.x = x;
          *          },
@@ -642,8 +625,8 @@ Tk.Base = (function(flexSetter) {
          *          }
          *      });
          *
-         *      Tk.define(&#39;My.Derived&#39;, {
-         *          extend: &#39;My.Base&#39;,
+         *      Tk.define('My.Derived', {
+         *          extend: 'My.Base',
          *
          *          constructor: function () {
          *              this.callParent([21]);
@@ -656,8 +639,8 @@ Tk.Base = (function(flexSetter) {
          *
          * This can be used with an override as follows:
          *
-         *      Tk.define(&#39;My.DerivedOverride&#39;, {
-         *          override: &#39;My.Derived&#39;,
+         *      Tk.define('My.DerivedOverride', {
+         *          override: 'My.Derived',
          *
          *          constructor: function (x) {
          *              this.callParent([x*2]); // calls original My.Derived constructor
@@ -670,8 +653,8 @@ Tk.Base = (function(flexSetter) {
          *
          * This also works with static and private methods.
          *
-         *      Tk.define(&#39;My.Derived2&#39;, {
-         *          extend: &#39;My.Base&#39;,
+         *      Tk.define('My.Derived2', {
+         *          extend: 'My.Base',
          *
          *          // privates: {
          *          statics: {
@@ -686,8 +669,8 @@ Tk.Base = (function(flexSetter) {
          *
          * Lastly, it also works with overridden static methods.
          *
-         *      Tk.define(&#39;My.Derived2Override&#39;, {
-         *          override: &#39;My.Derived2&#39;,
+         *      Tk.define('My.Derived2Override', {
+         *          override: 'My.Derived2',
          *
          *          // privates: {
          *          statics: {
@@ -713,31 +696,31 @@ Tk.Base = (function(flexSetter) {
             // of steps. Basically, just hit Step Into until you are where you really wanted
             // to be.
             var method,
-                superMethod = (method = this.callParent.caller) &amp;&amp; (method.$previous ||
-                    ((method = method.$owner ? method : method.caller) &amp;&amp;
+                superMethod = (method = this.callParent.caller) && (method.$previous ||
+                    ((method = method.$owner ? method : method.caller) &&
                         method.$owner.superclass[method.$name]));
 
             return superMethod.apply(this, args || noArgs);
         },
 
-<span id='Tk-Base-method-callSuper'>        /**
-</span>         * This method is used by an **override** to call the superclass method but 
-         * bypass any overridden method. This is often done to &quot;patch&quot; a method that 
+        /**
+         * This method is used by an **override** to call the superclass method but 
+         * bypass any overridden method. This is often done to "patch" a method that 
          * contains a bug but for whatever reason cannot be fixed directly.
          * 
          * Consider:
          * 
-         *      Tk.define(&#39;Tk.some.Class&#39;, {
+         *      Tk.define('Tk.some.Class', {
          *          method: function () {
-         *              console.log(&#39;Good&#39;);
+         *              console.log('Good');
          *          }
          *      });
          * 
-         *      Tk.define(&#39;Tk.some.DerivedClass&#39;, {
-         *          extend: &#39;Tk.some.Class&#39;,
+         *      Tk.define('Tk.some.DerivedClass', {
+         *          extend: 'Tk.some.Class',
          *          
          *          method: function () {
-         *              console.log(&#39;Bad&#39;);
+         *              console.log('Bad');
          * 
          *              // ... logic but with a bug ...
          *              
@@ -748,11 +731,11 @@ Tk.Base = (function(flexSetter) {
          * To patch the bug in `Tk.some.DerivedClass.method`, the typical solution is to create an
          * override:
          * 
-         *      Tk.define(&#39;App.patches.DerivedClass&#39;, {
-         *          override: &#39;Tk.some.DerivedClass&#39;,
+         *      Tk.define('App.patches.DerivedClass', {
+         *          override: 'Tk.some.DerivedClass',
          *          
          *          method: function () {
-         *              console.log(&#39;Fixed&#39;);
+         *              console.log('Fixed');
          * 
          *              // ... logic but with bug fixed ...
          *
@@ -762,9 +745,9 @@ Tk.Base = (function(flexSetter) {
          * 
          * The patch method cannot use {@link #method-callParent} to call the superclass 
          * `method` since that would call the overridden method containing the bug. In 
-         * other words, the above patch would only produce &quot;Fixed&quot; then &quot;Good&quot; in the 
-         * console log, whereas, using `callParent` would produce &quot;Fixed&quot; then &quot;Bad&quot; 
-         * then &quot;Good&quot;.
+         * other words, the above patch would only produce "Fixed" then "Good" in the 
+         * console log, whereas, using `callParent` would produce "Fixed" then "Bad" 
+         * then "Good".
          *
          * @protected
          * @param {Array/Arguments} args The arguments, either an array or the `arguments` object
@@ -777,18 +760,18 @@ Tk.Base = (function(flexSetter) {
             // of steps. Basically, just hit Step Into until you are where you really wanted
             // to be.
             var method,
-                superMethod = (method = this.callSuper.caller) &amp;&amp;
-                ((method = method.$owner ? method : method.caller) &amp;&amp;
+                superMethod = (method = this.callSuper.caller) &&
+                ((method = method.$owner ? method : method.caller) &&
                     method.$owner.superclass[method.$name]);
 
-            //&lt;debug&gt;
+            //<debug>
             if (!superMethod) {
                 method = this.callSuper.caller;
                 var parentClass, methodName;
 
                 if (!method.$owner) {
                     if (!method.caller) {
-                        throw new Error(&quot;Attempting to call a protected method from the public scope, which is not allowed&quot;);
+                        throw new Error("Attempting to call a protected method from the public scope, which is not allowed");
                     }
 
                     method = method.caller;
@@ -798,29 +781,29 @@ Tk.Base = (function(flexSetter) {
                 methodName = method.$name;
 
                 if (!(methodName in parentClass)) {
-                    throw new Error(&quot;this.callSuper() was called but there&#39;s no such method (&quot; + methodName +
-                        &quot;) found in the parent class (&quot; + (Tk.getClassName(parentClass) || &#39;Object&#39;) + &quot;)&quot;);
+                    throw new Error("this.callSuper() was called but there's no such method (" + methodName +
+                        ") found in the parent class (" + (Tk.getClassName(parentClass) || 'Object') + ")");
                 }
             }
-            //&lt;/debug&gt;
+            //</debug>
 
             return superMethod.apply(this, args || noArgs);
         },
 
-<span id='Tk-Base-property-self'>        /**
-</span>         * @property {Tk.Class} self
+        /**
+         * @property {Tk.Class} self
          *
          * Get the reference to the current class from which this object was instantiated. Unlike {@link Tk.Base#statics},
-         * `this.self` is scope-dependent and it&#39;s meant to be used for dynamic inheritance. See {@link Tk.Base#statics}
+         * `this.self` is scope-dependent and it's meant to be used for dynamic inheritance. See {@link Tk.Base#statics}
          * for a detailed comparison
          *
-         *     Tk.define(&#39;My.Cat&#39;, {
+         *     Tk.define('My.Cat', {
          *         statics: {
-         *             speciesName: &#39;Cat&#39; // My.Cat.speciesName = &#39;Cat&#39;
+         *             speciesName: 'Cat' // My.Cat.speciesName = 'Cat'
          *         },
          *
          *         constructor: function() {
-         *             alert(this.self.speciesName); // dependent on &#39;this&#39;
+         *             alert(this.self.speciesName); // dependent on 'this'
          *         },
          *
          *         clone: function() {
@@ -829,18 +812,18 @@ Tk.Base = (function(flexSetter) {
          *     });
          *
          *
-         *     Tk.define(&#39;My.SnowLeopard&#39;, {
-         *         extend: &#39;My.Cat&#39;,
+         *     Tk.define('My.SnowLeopard', {
+         *         extend: 'My.Cat',
          *         statics: {
-         *             speciesName: &#39;Snow Leopard&#39;         // My.SnowLeopard.speciesName = &#39;Snow Leopard&#39;
+         *             speciesName: 'Snow Leopard'         // My.SnowLeopard.speciesName = 'Snow Leopard'
          *         }
          *     });
          *
-         *     var cat = new My.Cat();                     // alerts &#39;Cat&#39;
-         *     var snowLeopard = new My.SnowLeopard();     // alerts &#39;Snow Leopard&#39;
+         *     var cat = new My.Cat();                     // alerts 'Cat'
+         *     var snowLeopard = new My.SnowLeopard();     // alerts 'Snow Leopard'
          *
          *     var clone = snowLeopard.clone();
-         *     alert(Tk.getClassName(clone));             // alerts &#39;My.SnowLeopard&#39;
+         *     alert(Tk.getClassName(clone));             // alerts 'My.SnowLeopard'
          *
          * @protected
          */
@@ -853,8 +836,8 @@ Tk.Base = (function(flexSetter) {
 
         $links: null,
 
-<span id='Tk-Base-method-link'>        /**
-</span>         * 关联 &quot;可销毁&quot; 对象，这些关联的对象会在实例销毁时一并销毁 (通过 `{@link #destroy}`).
+        /**
+         * 关联 "可销毁" 对象，这些关联的对象会在实例销毁时一并销毁 (通过 `{@link #destroy}`).
          * @param {String} name
          * @param {Object} value
          * @return {Object} 参数 `value`
@@ -870,8 +853,8 @@ Tk.Base = (function(flexSetter) {
             return value;
         },
 
-<span id='Tk-Base-method-unlink'>        /**
-</span>         * 销毁通过 `{@link #link linked}` 关联的对象
+        /**
+         * 销毁通过 `{@link #link linked}` 关联的对象
          * 实例销毁时会自动调用该方法，除非你要在实例销毁前销毁关联资源，否则不需要手动调用该方法
          * @param {String[]} names 关联的资源名称数组
          * @return {Tk.Base} this
@@ -881,14 +864,14 @@ Tk.Base = (function(flexSetter) {
             var me = this,
                 i, ln, link, value;
 
-            for (i = 0, ln = names.length; i &lt; ln; i++) {
+            for (i = 0, ln = names.length; i < ln; i++) {
                 link = names[i];
                 value = me[link];
 
                 if (value) {
-                    if (value.isInstance &amp;&amp; !value.destroyed) {
+                    if (value.isInstance && !value.destroyed) {
                         value.destroy();
-                    } else if (value.parentNode &amp;&amp; &#39;nodeType&#39; in value) {
+                    } else if (value.parentNode && 'nodeType' in value) {
                         value.parentNode.removeChild(value);
                     }
                 }
@@ -899,8 +882,8 @@ Tk.Base = (function(flexSetter) {
             return me;
         },
 
-<span id='Tk-Base-method-destroy'>        /**
-</span>         * 该方法用来清理对象和相关资源，该方法调用后，不能再使用该实例
+        /**
+         * 该方法用来清理对象和相关资源，该方法调用后，不能再使用该实例
          */
         destroy: function() {
             var me = this,
@@ -923,6 +906,4 @@ Tk.Base = (function(flexSetter) {
 
     return Base;
 
-}(Tk.Function.flexSetter));</pre>
-</body>
-</html>
+}(Tk.Function.flexSetter));

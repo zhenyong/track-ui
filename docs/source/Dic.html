@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>The source code</title>
+  <link href="../resources/prettify/prettify.css" type="text/css" rel="stylesheet" />
+  <script type="text/javascript" src="../resources/prettify/prettify.js"></script>
+  <style type="text/css">
+    .highlight { display: block; background-color: #ddd; }
+  </style>
+  <script type="text/javascript">
+    function highlight() {
+      document.getElementById(location.hash.replace(/#/, "")).className = "highlight";
+    }
+  </script>
+</head>
+<body onload="prettyPrint(); highlight();">
+  <pre class="prettyprint lang-js"><span id='Dic'>/**
+</span> * @class  Dic
+ * @singleton
+ * 
+ * 针对现有词条结构去加载生成字典，可以自动扫描上下文词条，或者手动添加词条
+ * 通过 Dic.scan() 扫描形如 V5.ResGInfoState = {} 这样的全局变量，然后把 `ResGInfoState`
+ * 作为词条的目录名。可以多次调用 scan 方法。
+ *
+ * 	例子：
+ * 		
+ * 	 V5.ResGInfoState = {
+ * 	 	&quot;global&quot;: {
+ * 	 		&quot;__cacheNameEx&quot;: &quot;Cache&quot;
+ * 	 	},
+		&quot;items&quot;: [{
+			&quot;key&quot;: &quot;00&quot;,
+			&quot;_name&quot;: &quot;Incapaz de Seguir&quot;,
+			&quot;_tips&quot;: &quot;Lo lamentamos, no se puede hacer el seguimiento del número insertado.&quot;,
+			&quot;_00_tipsMore_I1&quot;: &quot;El transportista n...&quot;,
+			&quot;_00_tipsMore_I2&quot;: &quot;Lamentamos informa...&quot;
+		}, {
+			&quot;key&quot;: &quot;01&quot;,
+			&quot;_name&quot;: &quot;Seguimiento Normal&quot;,
+			&quot;_tips&quot;: &quot;De su número de seguimiento ya hay información.&quot;,
+			&quot;_01_tipsMore_I1&quot;: &quot;Esto ...&quot;
+		}]
+ * 	 }
+ *
+ * 	Dic.scan();//等同于调用多个 Dic.addCategory(&#39;ResGInfoState&#39;, &#39;V5.ResGInfoState&#39;);
+ *
+ * 	Dic.get(&#39;ResGInfoState&#39;,&#39;__cacheNameEx&#39;)//=&gt; &quot;Cache&quot;
+ * 	Dic.getItem(&#39;ResGInfoState&#39;,&#39;01&#39;)//=&gt; {key:01,_name:&quot;Seguimiento Normal&quot;,...}
+ *
+ * 	var infoStateDic = Dic.getCategory(&#39;ResGInfoState&#39;);
+ * 	infoStateDic.get(&#39;__cacheNameEx&#39;);//=&gt; &quot;Cache&quot;
+ * 	infoStateDic.getItem(&#39;01&#39;)//=&gt; {key:01,_name:&quot;Seguimiento Normal&quot;,...}
+ *
+ * 
+ */
+
+(function(window) {
+	/* 
+	{
+		//第一层命名空间是词条目录
+		ResGInfoState: {
+			&quot;global&quot;: {
+				&quot;__cacheNameEx&quot;: &quot;Cache&quot;
+			},
+			itemsMap: {//itemsMap 根据词条的 items 生成
+				&#39;00&#39;: xxx//对应 items 中 key 为 &#39;00&#39; 的部分
+			},
+			&quot;items&quot;: [{
+				&quot;key&quot;: &quot;00&quot;,
+				&quot;_name&quot;: &quot;Incapaz de Seguir&quot;,
+				&quot;_tips&quot;: &quot;Lo lamentamos, no se puede hacer el seguimiento del número insertado.&quot;,
+				&quot;_00_tipsMore_I1&quot;: &quot;El transportista no tiene capacidad de seguimiento en línea para este tipo de envío especificado, por favor, no dude en ponerse en contacto con el transportista para otras opciones de seguimiento. Por ejemplo: Usted puede ir a ver el sitio web oficial de la compañía, encontrar la página de \&quot;contáctenos\&quot;, el correo electrónico o marcar la línea directa de ayuda.&quot;,
+				&quot;_00_tipsMore_I2&quot;: &quot;Lamentamos informarle que no pudimos identificar a qué transportista pertenece el número de seguimiento. Si es un nuevo servicio de transporte no lo tenemos agregado para el seguimiento, por favor, no dude en &lt;a href=\&quot;mailto:serv@17track.net\&quot;&gt;contactarnos&lt;/a&gt;, estaremos encantados de agregarlo y tener más servicios.&quot;
+			}, {
+				&quot;key&quot;: &quot;01&quot;,
+				&quot;_name&quot;: &quot;Seguimiento Normal&quot;,
+				&quot;_tips&quot;: &quot;De su número de seguimiento ya hay información.&quot;,
+				&quot;_01_tipsMore_I1&quot;: &quot;Esto quiere decir que el transporte ya ha aceptado su paquete, Y fue procesado e ingresado con la información de seguimiento. Por favor espere. Tendremos actualizaciones sincronizadas si hay algún escaneo adicional disponible desde el transporte.&quot;
+			}]
+		},
+		ResGExpress: {
+			...
+		}
+	}
+	 */
+
+	var defaultOptions = {
+		rootName: &#39;V5&#39;,
+		itemObjectCheck: function(name) {
+			return /^ResG/.test(name);
+		}
+	};
+
+	var data = {};
+	var categoryCache = {};
+
+	var Dic = {
+		data: data, 
+<span id='Dic-method-addCategory'>		/**
+</span>		 * 添加一份词条
+		 *
+		 * @param {String} name 例如 &#39;ResGInfoState&#39;
+		 * @param {Object} obj  词条对象{global:{},items:[]}
+		 */
+		addCategory: function(name, obj) {
+			console.log(&#39;&gt;&gt;&gt;addCategory&#39;, name, obj);
+			if (data[name]) {
+				console.log(&#39;重复&#39;, name, &#39;返回&#39;);
+				return;
+			}
+
+			data[name] = obj;
+			categoryCache[name] = new Category(name, obj);
+		},
+
+<span id='Dic-method-getCategory'>		/**
+</span>		 * 获取某份词条
+		 *
+		 * @param  {String} name  词条目录名，例如 &#39;ResGInfoState&#39;
+		 *
+		 * @return {Category}      [description]
+		 */
+		getCategory: function(name) {
+			return categoryCache[name];
+		},
+
+<span id='Dic-method-get'>		/**
+</span>		 * 获取某份词条的 global 下的词条
+		 *
+		 * @param  {[type]} categoryName 词条目录名，例如 &#39;ResGInfoState&#39;
+		 * @param  {[type]} name         global 下的某个属性值
+		 *
+		 * @return {String}              
+		 */
+		get: function (categoryName, name) {
+			var c = this.getCategory(categoryName);
+			return c &amp;&amp; c.get(name);
+		},
+
+<span id='Dic-method-getItem'>		/**
+</span>		 * 获取某份词条的 items 下的词条
+		 *
+		 * @param  {[type]} categoryName 词条目录名，例如 &#39;ResGInfoState&#39;
+		 * @param  {[type]} key          items 中某个元素的 key 属性
+		 *
+		 * @return {String}              
+		 */
+		getItem: function (categoryName, key) {
+			var c = this.getCategory(categoryName);
+			return c &amp;&amp; c.getItem(key);
+		},
+
+<span id='Dic-method-scan'>		/**
+</span>		 * 扫描形如 `V5.ResGInfoState` 这样的全局词条对象，然后加载到字典对象中
+		 *
+		 * @param  {Object} [options]
+		 * @param  {String} [options.rootName=&quot;V5&quot;] 词条顶级命名空间
+		 * @param  {Function} [options.itemObjectCheck] function(name,object){}
+		 * 判断 `V5` 下的属性名是否为词条属性，返回 true 表示词条
+		 * @param  {Function} [options.itemObjectCheck.name] `V5` 下的属性名
+		 * @param  {Object} [options.itemObjectCheck.object] 词条对象
+		 *
+		 * @return {Num}         新增了多少份词条
+		 */
+		scan: function(options) {
+			var p;
+
+			options = options || {};
+			var rootName = options.rootName || defaultOptions.rootName;
+			var itemObjectCheck = options.itemObjectCheck || defaultOptions.itemObjectCheck;
+
+			var root = rootName ? window[rootName] : window;
+			root = root || window;
+
+			for (p in root) {
+				if (root.hasOwnProperty(p) &amp;&amp; itemObjectCheck(p)) {
+					this.addCategory(p, root[p]);
+				}
+			}
+		}
+	};
+
+	//@tag Dic
+<span id='Dic-Category'>	/**
+</span>	 * @class Dic.Category
+	 *
+	 * 一个 Category 对应一份词条对象, 例如 V5.ResGInfoState
+	 *
+	 */
+	function Category(name, object) {
+		if (!object.itemsMap) {
+			object.itemsMap = pluckItems(object.items);
+		}
+		this.data = object;
+	}
+
+	Category.prototype = {
+<span id='Dic-Category-method-get'>		/**
+</span>		 * 获取 global 下的词条
+		 *
+		 * @param  {[type]} categoryName 词条目录名，例如 &#39;ResGInfoState&#39;
+		 * @param  {[type]} name         global 下的某个属性值
+		 *
+		 * @return {String}              
+		 */
+		get: function(name) {
+			var data = this.data;
+			return data &amp;&amp; data.global &amp;&amp; data.global[name];
+		},
+<span id='Dic-Category-method-getItem'>		/**
+</span>		 * 获取 items 下的词条
+		 *
+		 * @param  {[type]} key          items 中某个元素的 key 属性
+		 *
+		 * @return {String}              
+		 */
+		getItem: function(key) {
+			var data, itemsMap;
+			return data &amp;&amp; (itemsMap = data.itemsMap) &amp;&amp; itemsMap[key];
+		}
+	};
+
+	function pluckItems(items) {
+		var item, ret = {};
+		for (var i = 0, len = items ? items.length : 0; i &lt; len; i++) {
+			item = items[i];
+			ret[item.key] = item;
+		}
+		return ret;
+	}
+
+	window.Dic = Dic;
+
+})(window);</pre>
+</body>
+</html>

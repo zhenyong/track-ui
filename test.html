@@ -5,6 +5,34 @@
 	<script type="text/javascript" src="ext-debug.js"></script>
 </head>
 <body>
+
+<!-- locale -->
+<script type="text/javascript" src="./zh-cn.js"></script>
+
+<script type="text/javascript" src="./jquery-1.11.3.js"></script>
+<script type="text/javascript" src="./src/core/Tk.js"></script>
+
+<script type="text/javascript" src="./src/core/Dictionary.js"></script>
+
+<!-- core:lang -->
+<script type="text/javascript" src="./src/core/lang/Function.js"></script>
+<script type="text/javascript" src="./src/core/lang/Array.js"></script>
+<script type="text/javascript" src="./src/core/lang/Object.js"></script>
+
+<!-- core:class -->
+<script type="text/javascript" src="./src/core/class/Config.js"></script>
+<script type="text/javascript" src="./src/core/class/Configurator.js"></script>
+<script type="text/javascript" src="./src/core/class/Base.js"></script>
+<script type="text/javascript" src="./src/core/class/Class.js"></script>
+<script type="text/javascript" src="./src/core/class/Inventory.js"></script>
+<script type="text/javascript" src="./src/core/class/ClassManager.js"></script>
+<script type="text/javascript" src="./src/core/class/Mixin.js"></script>
+
+<!-- ui:dialog -->
+<script type="text/javascript" src="./src/ui/dialog/layer/layer.js"></script>
+<script type="text/javascript" src="./src/ui/dialog/Dialog.js"></script>
+
+
 <script type="text/javascript">
 // 	Ext.define('Person', {
 //     say: function(text) { alert(text); }
@@ -14,6 +42,34 @@ Ext.define('Developer', {
     extend: 'Person',
     say: function(text) { this.callParent(["print "+text]); }
 });
+Tk.define('Animal', {
+	constructor: function () {
+		console.log('constructor Animal');
+	}
+});
+
+Tk.define('Bird', {
+	statics: {
+		getDescription: function () {
+			return 'this is a kind of flying animal';
+		}
+	},
+	mixins: [CanSing],
+	extend: Animal,//TODO 字符串
+	constructor: function () {
+		this.callParent();
+		console.log('constructor Animal');
+	}
+});
+
+var bird = new Bird();
+bird.sing();
+
+var desc = Bird.getDescription();
+console.log(desc);
+
+Tk.ui.Dialog.alertInfo({content:'hello'});
+
 </script>
 </body>
 </html>

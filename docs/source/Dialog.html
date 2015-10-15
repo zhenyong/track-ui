@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>The source code</title>
+  <link href="../resources/prettify/prettify.css" type="text/css" rel="stylesheet" />
+  <script type="text/javascript" src="../resources/prettify/prettify.js"></script>
+  <style type="text/css">
+    .highlight { display: block; background-color: #ddd; }
+  </style>
+  <script type="text/javascript">
+    function highlight() {
+      document.getElementById(location.hash.replace(/#/, "")).className = "highlight";
+    }
+  </script>
+</head>
+<body onload="prettyPrint(); highlight();">
+  <pre class="prettyprint lang-js"><span id='Tk-ui-Dialog'>/**
+</span> * @class Tk.ui.Dialog
+ *
+ * simple usage
+ *
+ *     @example
+ *
+ * 
+ * 
+ */
+(function () {
+
+	var systemDic = Dic.getCategory(&#39;ResGSystem&#39;);
+
+	Tk.define(&#39;Tk.ui.Dialog&#39;, {
+		statics: {
+<span id='Tk-ui-Dialog-method-alertInfo'>			/**
+</span>			 * info 信息框
+			 *
+			 * @param  {Object}   options 配置
+			 * @param  {String}   [options.title=_(&quot;信息&quot;)]
+			 * @param  {String/Dom}   options.content 信息内容
+			 *
+			 */
+			alertInfo: function (options) {
+				//暂时依赖第三方
+				layer.open({
+				    type: 0, 
+				    title: options.title || systemDic.get(&#39;__gDialog_info&#39;),
+				    content: options.content
+				});
+
+			}
+		}
+	});
+
+})();</pre>
+</body>
+</html>
