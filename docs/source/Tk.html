@@ -15,51 +15,416 @@
   </script>
 </head>
 <body onload="prettyPrint(); highlight();">
-  <pre class="prettyprint lang-js">&#39;use strict&#39;;
+  <pre class="prettyprint lang-js">// @tag core
 <span id='Tk'>/**
 </span> * @class Tk
+ *
+ * Tk 全局命名空间，封装了所有的类、单例、工具方法。
+ * 
+ * @singleton
  */
-(function(global) {
+var Tk = Tk || {}; // jshint ignore:line
+// @define Tk
 
-	var Tk = global.Tk = global.Tk || {global:global}; //全局命名空间
+(function() {
+    var global = this,
+        objectPrototype = Object.prototype,
+        toString = objectPrototype.toString,
+        enumerables = [&#39;valueOf&#39;, &#39;toLocaleString&#39;, &#39;toString&#39;, &#39;constructor&#39;],
+        privateFn = function () {},
+        // This is the &quot;$previous&quot; method of a hook function on an instance. When called, it
+        // calls through the class prototype by the name of the called method.
+        callOverrideParent = function () {
+            var method = callOverrideParent.caller.caller; // skip callParent (our caller)
+            return method.$owner.prototype[method.$name].apply(this, arguments);
+        },
+        i,
+        iterableRe = /\[object\s*(?:Array|Arguments|\w*Collection|\w*List|HTML\s+document\.all\s+class)\]/;
 
-	var objectPrototype = Object.prototype,
-		toString = objectPrototype.toString,
-		enumerables = [&#39;valueOf&#39;, &#39;toLocaleString&#39;, &#39;toString&#39;, &#39;constructor&#39;], i;
-	
-<span id='Tk-property-apply'>	/**
-</span>	 * 参考 ref [jquery#extend](http://api.jquery.com/jQuery.extend/)
-	 *
-	 */
-	Tk.apply = $.extend;
+    Tk.global = global;
 
-	Tk.apply(Tk, {
+    // Mark these special fn&#39;s for easy identification:
+    privateFn.$nullFn = true;
+    privateFn.$privacy = &#39;framework&#39;;
 
-<span id='Tk-method-isArray'>		/**
-</span>		 * 判断输入值是否&quot;像数组&quot;，像则返回 true，包括 `arguments` `NodeList`都算
-		 *
-		 * @param {Object} target 
-		 * @return {Boolean}
-		 * @method
-		 */
-		isArray: (&#39;isArray&#39; in Array) ? Array.isArray : function(value) {
-			return toString.call(value) === &#39;[object Array]&#39;;
-		}
-	});
-
-	for (i in { toString: 1 }) {
-		//如果能够遍历到 `toString` 这类特定属性
-		//那么以后遍历属性就不需要对这些特定属性作额外遍历
+    for (i in { toString: 1 }) {
         enumerables = null;
     }
 
 <span id='Tk-property-enumerables'>    /**
-</span>     * 对于老的浏览器，某些特定的属性无法遍历，这里存放哪些无法遍历的属性名
+</span>     * 存放老的浏览器无法遍历的属性名
      * @property {String[]}
      */
     Tk.enumerables = enumerables;
 
-})(window);
+<span id='Tk-method-apply'>    /**
+</span>     * Copies all the properties of `config` to the specified `object`. There are two levels
+     * of defaulting supported:
+     * 
+     *      Tk.apply(obj, { a: 1 }, { a: 2 });
+     *      //obj.a === 1
+     * 
+     *      Tk.apply(obj, {  }, { a: 2 });
+     *      //obj.a === 2
+     * 
+     * Note that if recursive merging and cloning without referencing the original objects
+     * or arrays is needed, use {@link Tk.Object#merge} instead.
+     * 
+     * @param {Object} object The receiver of the properties.
+     * @param {Object} config The primary source of the properties.
+     * @param {Object} [defaults] An object that will also be applied for default values.
+     * @return {Object} returns `object`.
+     */
+    Tk.apply = function(object, config, defaults) {
+        if (defaults) {
+            Tk.apply(object, defaults);
+        }
+
+        if (object &amp;&amp; config &amp;&amp; typeof config === &#39;object&#39;) {
+            var i, j, k;
+
+            for (i in config) {
+                object[i] = config[i];
+            }
+
+            if (enumerables) {
+                for (j = enumerables.length; j--;) {
+                    k = enumerables[j];
+                    if (config.hasOwnProperty(k)) {
+                        object[k] = config[k];
+                    }
+                }
+            }
+        }
+
+        return object;
+    };
+
+    // Used by Tk.override
+    function addInstanceOverrides(target, owner, overrides) {
+        var name, value;
+
+        for (name in overrides) {
+            if (overrides.hasOwnProperty(name)) {
+                value = overrides[name];
+
+                if (typeof value === &#39;function&#39;) {
+
+                    value.$name = name;
+                    value.$owner = owner;
+
+                    value.$previous = target.hasOwnProperty(name) ?
+                        target[name] // already hooked, so call previous hook
+                        : callOverrideParent; // calls by name on prototype
+                }
+
+                target[name] = value;
+            }
+        }
+    }
+
+    Tk.buildSettings = Tk.apply({
+        baseCSSPrefix: &#39;x-&#39;
+    }, Tk.buildSettings || {});
+
+    Tk.apply(Tk, {
+<span id='Tk-property-idSeed'>        /**
+</span>         * @private
+         */
+        idSeed: 0,
+
+<span id='Tk-property-idPrefix'>        /**
+</span>         * @private
+         */
+        idPrefix: &#39;tk-&#39;,
+
+<span id='Tk-property-enableGarbageCollector'>        /**
+</span>         * `true` to automatically uncache orphaned Tk.Elements periodically. If set to
+         * `false`, the application will be required to clean up orphaned Tk.Elements and
+         * it&#39;s listeners as to not cause memory leakage.
+         */
+        enableGarbageCollector: false,
+
+<span id='Tk-property-privateFn'>        /**
+</span>         * @property {Function}
+         * A reusable empty function for use as `privates` members.
+         *
+         *      Tk.define(&#39;MyClass&#39;, {
+         *          nothing: Tk.emptyFn,
+         *
+         *          privates: {
+         *              privateNothing: Tk.privateFn
+         *          }
+         *      });
+         *
+         */
+        privateFn: privateFn,
+        
+
+<span id='Tk-method-id'>        /**
+</span>        * Generates unique ids. If the object/element is passes and it already has an `id`, it is unchanged.
+        * @param {Object} [o] The object to generate an id for.
+        * @param {String} [prefix=tk-gen] (optional) The `id` prefix.
+        * @return {String} The generated `id`.
+        */
+        id: function(o, prefix) {
+            if (o &amp;&amp; o.id) {
+                return o.id;
+            }
+
+            var id = (prefix || Tk.idPrefix) + (++Tk.idSeed);
+            
+            if (o) {
+                o.id = id;
+            }
+
+            return id;
+        },
+
+<span id='Tk-property-baseCSSPrefix'>        /**
+</span>         * @property {String} [baseCSSPrefix=&#39;x-&#39;]
+         * 样式前缀会应用到所有组件中 `Tk` 组件. 你可以在渲染之前配置其他值
+         *
+         *     Tk.buildSettings = {
+         *         baseCSSPrefix : &#39;abc-&#39;
+         *     };
+         *
+         * 便于定义皮肤
+         */
+        baseCSSPrefix: Tk.buildSettings.baseCSSPrefix,
+
+<span id='Tk-method-applyIf'>        /**
+</span>         * Copies all the properties of config to object if they don&#39;t already exist.
+         * @param {Object} object The receiver of the properties
+         * @param {Object} config The source of the properties
+         * @return {Object} returns obj
+         */
+        applyIf: function(object, config) {
+            var property;
+
+            if (object) {
+                for (property in config) {
+                    if (object[property] === undefined) {
+                        object[property] = config[property];
+                    }
+                }
+            }
+
+            return object;
+        },
+
+<span id='Tk-method-override'>        /**
+</span>         * Overrides members of the specified `target` with the given values.
+         *
+         * If the `target` is a class declared using {@link Tk#define Tk.define}, the
+         * `override` method of that class is called (see {@link Tk.Base#override}) given
+         * the `overrides`.
+         *
+         * If the `target` is a function, it is assumed to be a constructor and the contents
+         * of `overrides` are applied to its `prototype` using {@link Tk#apply Tk.apply}.
+         *
+         * If the `target` is an instance of a class declared using {@link Tk#define Tk.define},
+         * the `overrides` are applied to only that instance. In this case, methods are
+         * specially processed to allow them to use {@link Tk.Base#callParent}.
+         *
+         *      var panel = new Tk.Panel({ ... });
+         *
+         *      Tk.override(panel, {
+         *          initComponent: function () {
+         *              // extra processing...
+         *
+         *              this.callParent();
+         *          }
+         *      });
+         *
+         * If the `target` is none of these, the `overrides` are applied to the `target`
+         * using {@link Tk#apply Tk.apply}.
+         *
+         * Please refer to {@link Tk#define Tk.define} and {@link Tk.Base#override} for
+         * further details.
+         *
+         * @param {Object} target The target to override.
+         * @param {Object} overrides The properties to add or replace on `target`.
+         * @method override
+         */
+        override: function (target, overrides) {
+            if (target.$isClass) {
+                target.override(overrides);
+            } else if (typeof target === &#39;function&#39;) {
+                Tk.apply(target.prototype, overrides);
+            } else {
+                var owner = target.self,
+                    privates;
+
+                if (owner &amp;&amp; owner.$isClass) { // if (instance of Tk.define&#39;d class)
+                    privates = overrides.privates;
+                    if (privates) {
+                        overrides = Tk.apply({}, overrides);
+                        delete overrides.privates;
+                        addInstanceOverrides(target, owner, privates);
+                    }
+
+                    addInstanceOverrides(target, owner, overrides);
+                } else {
+                    Tk.apply(target, overrides);
+                }
+            }
+
+            return target;
+        },
+
+<span id='Tk-method-isEmpty'>        /**
+</span>         * 如果 `value` 为 “空” 则返回 true，下列情况都属于“空”
+         *
+         * - `null`
+         * - `undefined`
+         * - 空数组
+         * - 空字符串 (除非 `allowEmptyString` 参数 为 `true`)
+         *
+         * @param {Object} value 需要检测的值
+         * @param {Boolean} [allowEmptyString=false] `true` 允许空字符串表示“有值”
+         * @return {Boolean}
+         */
+        isEmpty: function(value, allowEmptyString) {
+            return (value == null) || (!allowEmptyString ? value === &#39;&#39; : false) || (Tk.isArray(value) &amp;&amp; value.length === 0);
+        },
+
+<span id='Tk-method-isArray'>        /**
+</span>         * 如果参数是一个 JS 数组 对象则返回 `true`,否则 `false`
+         *
+         * @param {Object} target 需要检测的目标
+         * @return {Boolean}
+         * @method
+         */
+        isArray: (&#39;isArray&#39; in Array) ? Array.isArray : function(value) {
+            return toString.call(value) === &#39;[object Array]&#39;;
+        },
+
+<span id='Tk-method-isDate'>        /**
+</span>         * 如果参数是一个 JS Date 对象则返回 `true`,否则 `false`
+         * @param {Object} object 需要检测的对象
+         * @return {Boolean}
+         */
+        isDate: function(value) {
+            return toString.call(value) === &#39;[object Date]&#39;;
+        },
+
+<span id='Tk-method-isObject'>        /**
+</span>         * 如果参数是一个 JS Object 对象则返回 `true`,否则 `false`
+         * 
+         * @param {Object} value 需要检测的值
+         * @return {Boolean}
+         * @method
+         */
+        isObject: (toString.call(null) === &#39;[object Object]&#39;) ?
+        function(value) {
+            // 检查 ownerDocument 以便排除 DOM 节点
+            return value !== null &amp;&amp; value !== undefined &amp;&amp; toString.call(value) === &#39;[object Object]&#39; &amp;&amp; value.ownerDocument === undefined;
+        } :
+        function(value) {
+            return toString.call(value) === &#39;[object Object]&#39;;
+        },
+
+<span id='Tk-method-isSimpleObject'>        /**
+</span>         * @private
+         */
+        isSimpleObject: function(value) {
+            return value instanceof Object &amp;&amp; value.constructor === Object;
+        },
+
+<span id='Tk-method-isPrimitive'>        /**
+</span>         * 如果参数是一个 JS &#39;字面量&#39; (string/number/boolean)，则返回 `true`，否则返回 `false`
+         * @param {Object} value 需要检测的值
+         * @return {Boolean}
+         */
+        isPrimitive: function(value) {
+            var type = typeof value;
+
+            return type === &#39;string&#39; || type === &#39;number&#39; || type === &#39;boolean&#39;;
+        },
+
+<span id='Tk-method-isFunction'>        /**
+</span>         * 如果参数是一个 JS 函数，则返回 `true`，否则返回 `false`
+         * 
+         * @param {Object} value 需要检测的值
+         * @return {Boolean}
+         * @method
+         */
+        isFunction:
+        // typeof &lt;NodeList&gt; 在 Safari 3.x, 4.x 返回 &#39;function&#39;, 此时需要使用
+        // Object.prototype.toString (慢一点)
+        (typeof document !== &#39;undefined&#39; &amp;&amp; typeof document.getElementsByTagName(&#39;body&#39;) === &#39;function&#39;) ? function(value) {
+            return !!value &amp;&amp; toString.call(value) === &#39;[object Function]&#39;;
+        } : function(value) {
+            return !!value &amp;&amp; typeof value === &#39;function&#39;;
+        },
+
+<span id='Tk-method-isNumber'>        /**
+</span>         * 如果参数是一个有限数字，那么返回 `true`，非数字或者无限数字都返回 `false`
+         * @param {Object} value 需要检测的值
+         * @return {Boolean}
+         */
+        isNumber: function(value) {
+            return typeof value === &#39;number&#39; &amp;&amp; isFinite(value);
+        },
+
+<span id='Tk-method-isNumeric'>        /**
+</span>         * 检测是一个值是否长得像数字
+         * @param {Object} value 例如: 1, &#39;1&#39;, &#39;2.34&#39;
+         * @return {Boolean} 像则返回 True
+         */
+        isNumeric: function(value) {
+            return !isNaN(parseFloat(value)) &amp;&amp; isFinite(value);
+        },
+
+<span id='Tk-method-isString'>        /**
+</span>         * 如果参数是个字符串，那么返回 `true`
+         * @param {Object} value 需要检测的值
+         * @return {Boolean}
+         */
+        isString: function(value) {
+            return typeof value === &#39;string&#39;;
+        },
+
+<span id='Tk-method-isBoolean'>        /**
+</span>         * 如果参数是个布尔值，那么返回 `true`
+         *
+         * @param {Object} value 需要检测的值
+         * @return {Boolean}
+         */
+        isBoolean: function(value) {
+            return typeof value === &#39;boolean&#39;;
+        },
+
+<span id='Tk-method-isElement'>        /**
+</span>         * Returns `true` if the passed value is an HTMLElement
+         * @param {Object} value 需要检测的值
+         * @return {Boolean}
+         */
+        isElement: function(value) {
+            return value ? value.nodeType === 1 : false;
+        },
+
+<span id='Tk-method-isTextNode'>        /**
+</span>         * Returns `true` if the passed value is a TextNode
+         * @param {Object} value 需要检测的值
+         * @return {Boolean}
+         */
+        isTextNode: function(value) {
+            return value ? value.nodeName === &quot;#text&quot; : false;
+        },
+
+<span id='Tk-method-isDefined'>        /**
+</span>         * Returns `true` if the passed value is defined.
+         * @param {Object} value 需要检测的值
+         * @return {Boolean}
+         */
+        isDefined: function(value) {
+            return typeof value !== &#39;undefined&#39;;
+        }
+    }); // Tk.apply(Tk
+
+}());
 </pre>
 </body>
 </html>

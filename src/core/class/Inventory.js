@@ -1,23 +1,6 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-  <title>The source code</title>
-  <link href="../resources/prettify/prettify.css" type="text/css" rel="stylesheet" />
-  <script type="text/javascript" src="../resources/prettify/prettify.js"></script>
-  <style type="text/css">
-    .highlight { display: block; background-color: #ddd; }
-  </style>
-  <script type="text/javascript">
-    function highlight() {
-      document.getElementById(location.hash.replace(/#/, "")).className = "highlight";
-    }
-  </script>
-</head>
-<body onload="prettyPrint(); highlight();">
-  <pre class="prettyprint lang-js">    // @tag class
-<span id='Tk-Inventory'>/**
-</span> * @class Tk.Inventory
+    // @tag class
+/**
+ * @class Tk.Inventory
  * @private
  */
 Tk.Inventory = function () {
@@ -72,18 +55,18 @@ Tk.Inventory.prototype = {
 
             length = aliases.length;
             nameMapping = nameTo[cls] || (nameTo[cls] = []);
-            for (i = 0; i &lt; length; ++i) {
+            for (i = 0; i < length; ++i) {
                 if (!(a = aliases[i])) {
                     continue;
                 }
 
                 if (toName[a] !== cls) {
-                    //&lt;debug&gt;
-                    if (!update &amp;&amp; toName[a]) {
-                        Tk.log.warn(&quot;Overriding existing mapping: &#39;&quot; + a + &quot;&#39; From &#39;&quot; +
-                            toName[a] + &quot;&#39; to &#39;&quot; + cls + &quot;&#39;. Is this intentional?&quot;);
+                    //<debug>
+                    if (!update && toName[a]) {
+                        Tk.log.warn("Overriding existing mapping: '" + a + "' From '" +
+                            toName[a] + "' to '" + cls + "'. Is this intentional?");
                     }
-                    //&lt;/debug&gt;
+                    //</debug>
 
                     toName[a] = cls;
                     nameMapping.push(a);
@@ -92,8 +75,8 @@ Tk.Inventory.prototype = {
         }
     },
 
-<span id='Tk-Inventory-method-getAliasesByName'>    /**
-</span>     * Get the aliases of a class by the class name
+    /**
+     * Get the aliases of a class by the class name
      *
      * @param {String} name
      * @return {Array} aliases
@@ -106,38 +89,38 @@ Tk.Inventory.prototype = {
         return this.nameToAlternates[name] || null;
     },
 
-<span id='Tk-Inventory-method-getNameByAlias'>    /**
-</span>     * Get the name of a class by its alias.
+    /**
+     * Get the name of a class by its alias.
      *
      * @param {String} alias
      * @return {String} className
      */
     getNameByAlias: function(alias) {
-        return this.aliasToName[alias] || &#39;&#39;;
+        return this.aliasToName[alias] || '';
     },
 
-<span id='Tk-Inventory-method-getNameByAlternate'>    /**
-</span>     * Get the name of a class by its alternate name.
+    /**
+     * Get the name of a class by its alternate name.
      *
      * @param {String} alternate
      * @return {String} className
      */
     getNameByAlternate: function (alternate) {
-        return this.alternateToName[alternate] || &#39;&#39;;
+        return this.alternateToName[alternate] || '';
     },
 
-<span id='Tk-Inventory-method-getNamesByExpression'>    /**
-</span>     * Converts a string expression to an array of matching class names. An expression can
+    /**
+     * Converts a string expression to an array of matching class names. An expression can
      * either refers to class aliases or class names. Expressions support wildcards:
      *
-     *      // returns [&#39;Tk.window.Window&#39;]
-     *     var window = Tk.ClassManager.getNamesByExpression(&#39;widget.window&#39;);
+     *      // returns ['Tk.window.Window']
+     *     var window = Tk.ClassManager.getNamesByExpression('widget.window');
      *
-     *     // returns [&#39;widget.panel&#39;, &#39;widget.window&#39;, ...]
-     *     var allWidgets = Tk.ClassManager.getNamesByExpression(&#39;widget.*&#39;);
+     *     // returns ['widget.panel', 'widget.window', ...]
+     *     var allWidgets = Tk.ClassManager.getNamesByExpression('widget.*');
      *
-     *     // returns [&#39;Tk.data.Store&#39;, &#39;Tk.data.ArrayProxy&#39;, ...]
-     *     var allData = Tk.ClassManager.getNamesByExpression(&#39;Tk.data.*&#39;);
+     *     // returns ['Tk.data.Store', 'Tk.data.ArrayProxy', ...]
+     *     var allData = Tk.ClassManager.getNamesByExpression('Tk.data.*');
      *
      * @param {String/String[]} expression
      * @param {Object} [exclude=null] An object keyed by class name containing classes to
@@ -160,8 +143,8 @@ Tk.Inventory.prototype = {
             wildcardRe = me.wildcardRe,
             expr, i, list, match, n, name, regex;
 
-        for (i = 0; i &lt; length; ++i) {
-            if ((expr = expressions[i]).indexOf(&#39;*&#39;) &lt; 0) {
+        for (i = 0; i < length; ++i) {
+            if ((expr = expressions[i]).indexOf('*') < 0) {
                 // No wildcard
                 if (!(name = aliasToName[expr])) {
                     if (!(name = alternateToName[expr])) {
@@ -169,25 +152,25 @@ Tk.Inventory.prototype = {
                     }
                 }
 
-                if (!(name in map) &amp;&amp; !(exclude &amp;&amp; (name in exclude))) {
+                if (!(name in map) && !(exclude && (name in exclude))) {
                     map[name] = 1;
                     names.push(name);
                 }
             } else {
-                regex = new RegExp(&#39;^&#39; + expr.replace(wildcardRe, &#39;(.*?)&#39;) + &#39;$&#39;);
+                regex = new RegExp('^' + expr.replace(wildcardRe, '(.*?)') + '$');
 
                 for (name in nameToAliases) {
-                    if (!(name in map) &amp;&amp; !(exclude &amp;&amp; (name in exclude))) {
+                    if (!(name in map) && !(exclude && (name in exclude))) {
                         if (!(match = regex.test(name))) {
                             n = (list = nameToAliases[name]).length;
-                            while (!match &amp;&amp; n-- &gt; 0) {
+                            while (!match && n-- > 0) {
                                 match = regex.test(list[n]);
                             }
 
                             list = nameToAlternates[name];
-                            if (list &amp;&amp; !match) {
+                            if (list && !match) {
                                 n = list.length;
-                                while (!match &amp;&amp; n-- &gt; 0) {
+                                while (!match && n-- > 0) {
                                     match = regex.test(list[n]);
                                 }
                             }
@@ -208,7 +191,7 @@ Tk.Inventory.prototype = {
     getPath: function (className) {
         var me = this,
             paths = me.paths,
-            ret = &#39;&#39;,
+            ret = '',
             prefix;
 
         if (className in paths) {
@@ -219,11 +202,11 @@ Tk.Inventory.prototype = {
                 className = className.substring(prefix.length + 1);
                 ret = paths[prefix];
                 if (ret) {
-                    ret += &#39;/&#39;;
+                    ret += '/';
                 }
             }
 
-            ret += className.replace(me.dotRe, &#39;/&#39;) + &#39;.js&#39;;
+            ret += className.replace(me.dotRe, '/') + '.js';
         }
 
         return ret;
@@ -239,15 +222,15 @@ Tk.Inventory.prototype = {
             length, prefix;
 
         // Walk the prefixes backwards so we consider the longest ones first.
-        while (i-- &gt; 0) {
+        while (i-- > 0) {
             length = (prefix = prefixes[i]).length;
-            if (length &lt; className.length &amp;&amp; className.charAt(length) === &#39;.&#39;
-                                          &amp;&amp; prefix === className.substring(0, length)) {
+            if (length < className.length && className.charAt(length) === '.'
+                                          && prefix === className.substring(0, length)) {
                 return prefix;
             }
         }
 
-        return &#39;&#39;;
+        return '';
     },
 
     getPrefixes: function () {
@@ -314,8 +297,8 @@ Tk.Inventory.prototype = {
         return trueName || name;
     },
 
-<span id='Tk-Inventory-method-select'>    /**
-</span>     * This method returns a selector object that produces a selection of classes and
+    /**
+     * This method returns a selector object that produces a selection of classes and
      * delivers them to the desired `receiver`.
      * 
      * The returned selector object has the same methods as the given `receiver` object
@@ -328,11 +311,11 @@ Tk.Inventory.prototype = {
      * 
      *      var sel = inventory.select({
      *              require: function (classes) {
-     *                  console.log(&#39;Classes: &#39; + classes.join(&#39;,&#39;));
+     *                  console.log('Classes: ' + classes.join(','));
      *              }
      *          });
      * 
-     *      sel.exclude(&#39;Tk.chart.*&#39;).exclude(&#39;Tk.draw.*&#39;).require(&#39;*&#39;);
+     *      sel.exclude('Tk.chart.*').exclude('Tk.draw.*').require('*');
      *      
      *      // Logs all classes except those in the Tk.chart and Tk.draw namespaces.
      * 
@@ -372,13 +355,13 @@ Tk.Inventory.prototype = {
         };
     },
 
-<span id='Tk-Inventory-method-setPath'>    /**
-</span>     * Sets the path of a namespace.
+    /**
+     * Sets the path of a namespace.
      * For Example:
      *
-     *      inventory.setPath(&#39;Tk&#39;, &#39;.&#39;);
+     *      inventory.setPath('Tk', '.');
      *      inventory.setPath({
-     *          Tk: &#39;.&#39;
+     *          Tk: '.'
      *      });
      *
      * @param {String/Object} name The name of a single mapping or an object of mappings.
@@ -401,11 +384,8 @@ Tk.Inventory.prototype = {
     _compareNames: function (lhs, rhs) {
         var cmp = lhs.length - rhs.length;
         if (!cmp) {
-            cmp = (lhs &lt; rhs) ? -1 : 1;
+            cmp = (lhs < rhs) ? -1 : 1;
         }
         return cmp;
     }
 };
-</pre>
-</body>
-</html>

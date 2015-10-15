@@ -24,7 +24,6 @@
  */
 &#39;use strict&#39;;
 
-// The &quot;constructor&quot; for chain:
 var TemplateClass = function() {},
 	TkObject = Tk.Object = {
 
@@ -43,6 +42,36 @@ var TemplateClass = function() {},
 			var result = new TemplateClass();
 			TemplateClass.prototype = null;
 			return result;
+		},
+
+<span id='Tk-Object-method-getKeys'>		/**
+</span>		 * 返回对象当前自身所有（`hasOwnProperty` 为 true）的属性，作为数组返回
+		 *
+		 *     var values = Ext.Object.getKeys({
+		 *         name: &#39;Jacky&#39;,
+		 *         loves: &#39;food&#39;
+		 *     }); // [&#39;name&#39;, &#39;loves&#39;]
+		 *
+		 * @param {Object} object
+		 * @return {String[]} 数组的属性值组成的数组
+		 * @method
+		 */
+		getKeys: (typeof Object.keys == &#39;function&#39;) ? function(object) {
+			if (!object) {
+				return [];
+			}
+			return Object.keys(object);
+		} : function(object) {
+			var keys = [],
+				property;
+
+			for (property in object) {
+				if (object.hasOwnProperty(property)) {
+					keys.push(property);
+				}
+			}
+
+			return keys;
 		}
 	};</pre>
 </body>

@@ -1,5 +1,3 @@
 {
-	"es3": true,
-	"globalstrict": true,
-	"globals":{"Tk":true}
+	"globals": {"Tk":true,"_":true}
 }

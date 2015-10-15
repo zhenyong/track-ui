@@ -1,22 +1,5 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-  <title>The source code</title>
-  <link href="../resources/prettify/prettify.css" type="text/css" rel="stylesheet" />
-  <script type="text/javascript" src="../resources/prettify/prettify.js"></script>
-  <style type="text/css">
-    .highlight { display: block; background-color: #ddd; }
-  </style>
-  <script type="text/javascript">
-    function highlight() {
-      document.getElementById(location.hash.replace(/#/, "")).className = "highlight";
-    }
-  </script>
-</head>
-<body onload="prettyPrint(); highlight();">
-  <pre class="prettyprint lang-js"><span id='Tk-Class'>/**
-</span> * @class Tk.Class
+/**
+ * @class Tk.Class
  *
  * 底层类工厂，不要直接使用。创建类可以通过 {@link Tk#define Tk.define} 。
  * 
@@ -31,15 +14,15 @@
     // 创建一个干净构造函数
     function makeCtor () {
         function constructor () {
-            // Opera has some problems returning from a constructor when Dragonfly isn&#39;t running. The || null seems to
+            // Opera has some problems returning from a constructor when Dragonfly isn't running. The || null seems to
             // be sufficient to stop it misbehaving. Known to be required against 10.53, 11.51 and 11.61.
             return this.constructor.apply(this, arguments) || null;
         }
         return constructor;
     }
 
-<span id='Tk-Class-method-constructor'>    /**
-</span>     * @method constructor
+    /**
+     * @method constructor
      * 创建一个匿名类
      *
      * @param {Object} data 表示这个类的一组成员对象
@@ -48,7 +31,7 @@
      * @return {Tk.Base} 新创建的类
      */
     Tk.Class = ExtClass = function(Class, data, onCreated) {
-        if (typeof Class != &#39;function&#39;) {
+        if (typeof Class != 'function') {
             onCreated = data;
             data = Class;
             Class = null;
@@ -69,8 +52,8 @@
         
         makeCtor: makeCtor,
         
-<span id='Tk-Class-method-onBeforeCreated'>        /**
-</span>         * @private
+        /**
+         * @private
          */
         onBeforeCreated: function(Class, data, hooks) {
             Class.addMembers(data);
@@ -78,8 +61,8 @@
             hooks.onCreated.call(Class, Class);
         },
 
-<span id='Tk-Class-method-create'>        /**
-</span>         * @private
+        /**
+         * @private
          */
         create: function (Class, data) {
             var i = baseStaticMembers.length,
@@ -97,8 +80,8 @@
             return Class;
         },
 
-<span id='Tk-Class-method-process'>        /**
-</span>         * @private
+        /**
+         * @private
          */
         process: function(Class, data, onCreated) {
             var preprocessorStack = data.preprocessors || ExtClass.defaultPreprocessors,
@@ -113,10 +96,10 @@
             delete data.preprocessors;
             Class._classHooks = hooks;
 
-            for (i = 0,ln = preprocessorStack.length; i &lt; ln; i++) {
+            for (i = 0,ln = preprocessorStack.length; i < ln; i++) {
                 preprocessor = preprocessorStack[i];
 
-                if (typeof preprocessor == &#39;string&#39;) {
+                if (typeof preprocessor == 'string') {
                     preprocessor = registeredPreprocessors[preprocessor];
                     preprocessorsProperties = preprocessor.properties;
 
@@ -124,7 +107,7 @@
                         preprocessors.push(preprocessor.fn);
                     }
                     else if (preprocessorsProperties) {
-                        for (j = 0,subLn = preprocessorsProperties.length; j &lt; subLn; j++) {
+                        for (j = 0,subLn = preprocessorsProperties.length; j < subLn; j++) {
                             preprocessorProperty = preprocessorsProperties[j];
 
                             if (data.hasOwnProperty(preprocessorProperty)) {
@@ -160,13 +143,13 @@
             hooks.onBeforeCreated.apply(me, arguments);
         },
 
-<span id='Tk-Class-property-preprocessors'>        /**
-</span>         * @private
+        /**
+         * @private
          * */
         preprocessors: {},
 
-<span id='Tk-Class-static-method-registerPreprocessor'>        /**
-</span>         * 注册一个 “预处理器”
+        /**
+         * 注册一个 “预处理器”
          *
          * @param {String} name 处理器名称
          * @param {Function} fn 处理器执行的方法. 格式:
@@ -189,7 +172,7 @@
          */
         registerPreprocessor: function(name, fn, properties, position, relativeTo) {
             if (!position) {
-                position = &#39;last&#39;;
+                position = 'last';
             }
 
             if (!properties) {
@@ -207,8 +190,8 @@
             return this;
         },
 
-<span id='Tk-Class-static-method-getPreprocessor'>        /**
-</span>         * 获取处理器的处理方法
+        /**
+         * 获取处理器的处理方法
          *
          * @param {String} name
          * @return {Function} preprocessor
@@ -219,20 +202,20 @@
             return this.preprocessors[name];
         },
 
-<span id='Tk-Class-method-getPreprocessors'>        /**
-</span>         * @private
+        /**
+         * @private
          */
         getPreprocessors: function() {
             return this.preprocessors;
         },
 
-<span id='Tk-Class-property-defaultPreprocessors'>        /**
-</span>         * @private
+        /**
+         * @private
          */
         defaultPreprocessors: [],
 
-<span id='Tk-Class-static-method-getDefaultPreprocessors'>        /**
-</span>         * 获取默认预处理器
+        /**
+         * 获取默认预处理器
          * @return {Function[]} defaultPreprocessors
          * @private
          * @static
@@ -241,8 +224,8 @@
             return this.defaultPreprocessors;
         },
 
-<span id='Tk-Class-static-method-setDefaultPreprocessors'>        /**
-</span>         * Set the default array stack of default pre-processors
+        /**
+         * Set the default array stack of default pre-processors
          *
          * @private
          * @param {Array} preprocessors
@@ -255,23 +238,23 @@
             return this;
         },
 
-<span id='Tk-Class-static-method-setDefaultPreprocessorPosition'>        /**
-</span>         * Insert this pre-processor at a specific position in the stack, optionally relative to
+        /**
+         * Insert this pre-processor at a specific position in the stack, optionally relative to
          * any existing pre-processor. For example:
          *
-         *     Tk.Class.registerPreprocessor(&#39;debug&#39;, function(cls, data, fn) {
+         *     Tk.Class.registerPreprocessor('debug', function(cls, data, fn) {
          *         // Your code here
          *
          *         if (fn) {
          *             fn.call(this, cls, data);
          *         }
-         *     }).setDefaultPreprocessorPosition(&#39;debug&#39;, &#39;last&#39;);
+         *     }).setDefaultPreprocessorPosition('debug', 'last');
          *
          * @private
          * @param {String} name The pre-processor name. Note that it needs to be registered with
          * {@link Tk.Class#registerPreprocessor registerPreprocessor} before this
          * @param {String} offset The insertion position. Four possible values are:
-         * &#39;first&#39;, &#39;last&#39;, or: &#39;before&#39;, &#39;after&#39; (relative to the name provided in the third argument)
+         * 'first', 'last', or: 'before', 'after' (relative to the name provided in the third argument)
          * @param {String} relativeName
          * @return {Tk.Class} this
          * @static
@@ -280,19 +263,19 @@
             var defaultPreprocessors = this.defaultPreprocessors,
                 index;
 
-            if (typeof offset == &#39;string&#39;) {
-                if (offset === &#39;first&#39;) {
+            if (typeof offset == 'string') {
+                if (offset === 'first') {
                     defaultPreprocessors.unshift(name);
 
                     return this;
                 }
-                else if (offset === &#39;last&#39;) {
+                else if (offset === 'last') {
                     defaultPreprocessors.push(name);
 
                     return this;
                 }
 
-                offset = (offset === &#39;after&#39;) ? 1 : -1;
+                offset = (offset === 'after') ? 1 : -1;
             }
 
             index = Tk.Array.indexOf(defaultPreprocessors, relativeName);
@@ -305,20 +288,20 @@
         }
     });
 
-<span id='Tk-Class-cfg-extend'>    /**
-</span>     * @cfg {String} extend
+    /**
+     * @cfg {String} extend
      * The parent class that this class extends. For example:
      *
-     *     Tk.define(&#39;Person&#39;, {
+     *     Tk.define('Person', {
      *         say: function(text) { alert(text); }
      *     });
      *
-     *     Tk.define(&#39;Developer&#39;, {
-     *         extend: &#39;Person&#39;,
-     *         say: function(text) { this.callParent([&quot;print &quot;+text]); }
+     *     Tk.define('Developer', {
+     *         extend: 'Person',
+     *         say: function(text) { this.callParent(["print "+text]); }
      *     });
      */
-    ExtClass.registerPreprocessor(&#39;extend&#39;, function(Class, data, hooks) {
+    ExtClass.registerPreprocessor('extend', function(Class, data, hooks) {
         
         var Base = Tk.Base,
             basePrototype = Base.prototype,
@@ -327,7 +310,7 @@
 
         delete data.extend;
 
-        if (extend &amp;&amp; extend !== Object) {
+        if (extend && extend !== Object) {
             Parent = extend;
         }
         else {
@@ -353,18 +336,18 @@
             delete data.onClassExtended;
         }
 
-    }, true); // true to always run this preprocessor even w/o &quot;extend&quot; keyword
+    }, true); // true to always run this preprocessor even w/o "extend" keyword
 
 
-    //&lt;feature classSystem.statics&gt;
-<span id='Tk-Class-cfg-statics'>    /**
-</span>     * @cfg {Object} statics
+    //<feature classSystem.statics>
+    /**
+     * @cfg {Object} statics
      * 静态方法. For example:
      *
-     *     Tk.define(&#39;Computer&#39;, {
+     *     Tk.define('Computer', {
      *          statics: {
      *              factory: function(brand) {
-     *                  // &#39;this&#39; in static methods refer to the class itself
+     *                  // 'this' in static methods refer to the class itself
      *                  return new this(brand);
      *              }
      *          },
@@ -372,46 +355,46 @@
      *          constructor: function() { ... }
      *     });
      *
-     *     var dellComputer = Computer.factory(&#39;Dell&#39;);
+     *     var dellComputer = Computer.factory('Dell');
      */
-    ExtClass.registerPreprocessor(&#39;statics&#39;, function(Class, data) {
+    ExtClass.registerPreprocessor('statics', function(Class, data) {
         
         Class.addStatics(data.statics);
 
         delete data.statics;
     });
-    //&lt;/feature&gt;
+    //</feature>
 
-    //&lt;feature classSystem.inheritableStatics&gt;
-<span id='Tk-Class-cfg-inheritableStatics'>    /**
-</span>     * @cfg {Object} inheritableStatics
+    //<feature classSystem.inheritableStatics>
+    /**
+     * @cfg {Object} inheritableStatics
      * 会被子类继承的静态方法
      */
-    ExtClass.registerPreprocessor(&#39;inheritableStatics&#39;, function(Class, data) {
+    ExtClass.registerPreprocessor('inheritableStatics', function(Class, data) {
         
         Class.addInheritableStatics(data.inheritableStatics);
 
         delete data.inheritableStatics;
     });
-    //&lt;/feature&gt;
+    //</feature>
 
     Tk.createRuleFn = function (code) {
-        return new Function(&#39;$c&#39;, &#39;with($c) { return (&#39; + code + &#39;); }&#39;);
+        return new Function('$c', 'with($c) { return (' + code + '); }');
     };
 
-    //&lt;feature classSystem.mixins&gt;
-<span id='Tk-Class-cfg-mixins'>    /**
-</span>     * @cfg {String[]/Object} mixins
+    //<feature classSystem.mixins>
+    /**
+     * @cfg {String[]/Object} mixins
      * 一组用于混合的类. 例如:
      *
-     *     Tk.define(&#39;CanSing&#39;, {
+     *     Tk.define('CanSing', {
      *          sing: function() {
-     *              alert(&quot;For he&#39;s a jolly good fellow...&quot;)
+     *              alert("For he's a jolly good fellow...")
      *          }
      *     });
      *
-     *     Tk.define(&#39;Musician&#39;, {
-     *          mixins: [&#39;CanSing&#39;]
+     *     Tk.define('Musician', {
+     *          mixins: ['CanSing']
      *     })
      *
      * 此时，Musician 通过混合 CanSing 获得 `sing` 方法
@@ -419,9 +402,9 @@
      * 如果 Musician 已经有 `sing` 方法? 或者你要混入两个类的
      *  `sing` 方法? 那么最好把 mixins 定义成对象:
      *
-     *     Tk.define(&#39;Musician&#39;, {
+     *     Tk.define('Musician', {
      *          mixins: {
-     *              canSing: &#39;CanSing&#39;
+     *              canSing: 'CanSing'
      *          },
      * 
      *          sing: function() {
@@ -433,10 +416,10 @@
      * 原来有一个自动混入的 `sing` 方法，此时 Musician 的`sing` 方法 覆盖了混入的
      * `sing` 方法，不过你还是可以通过 `mixins` 属性去访问.
      */
-    ExtClass.registerPreprocessor(&#39;mixins&#39;, function(Class, data, hooks) {
-        //&lt;debug&gt;
-        Tk.classSystemMonitor &amp;&amp; Tk.classSystemMonitor(Class, &#39;Tk.Class#mixinsPreprocessor&#39;, arguments);
-        //&lt;/debug&gt;
+    ExtClass.registerPreprocessor('mixins', function(Class, data, hooks) {
+        //<debug>
+        Tk.classSystemMonitor && Tk.classSystemMonitor(Class, 'Tk.Class#mixinsPreprocessor', arguments);
+        //</debug>
         
         var mixins = data.mixins,
             onCreated = hooks.onCreated;
@@ -456,14 +439,14 @@
             return hooks.onCreated.apply(this, arguments);
         };
     });
-    //&lt;/feature&gt;
+    //</feature>
 
 
-    //&lt;feature classSystem.backwardsCompatible&gt;
+    //<feature classSystem.backwardsCompatible>
     // Backwards compatible
     Tk.extend = function(Class, Parent, members) {
             
-        if (arguments.length === 2 &amp;&amp; Tk.isObject(Parent)) {
+        if (arguments.length === 2 && Tk.isObject(Parent)) {
             members = Parent;
             Parent = Class;
             Class = null;
@@ -472,32 +455,32 @@
         var cls;
 
         if (!Parent) {
-            throw new Error(&quot;[Tk.extend] Attempting to extend from a class which has not been loaded on the page.&quot;);
+            throw new Error("[Tk.extend] Attempting to extend from a class which has not been loaded on the page.");
         }
 
         members.extend = Parent;
         members.preprocessors = [
-            &#39;extend&#39;
-            //&lt;feature classSystem.statics&gt;
-            ,&#39;statics&#39;
-            //&lt;/feature&gt;
-            //&lt;feature classSystem.inheritableStatics&gt;
-            ,&#39;inheritableStatics&#39;
-            //&lt;/feature&gt;
-            //&lt;feature classSystem.mixins&gt;
-            ,&#39;mixins&#39;
-            //&lt;/feature&gt;
-            //&lt;feature classSystem.platformConfig&gt;
-            ,&#39;platformConfig&#39;
-            //&lt;/feature&gt;
-            //&lt;feature classSystem.config&gt;
-            ,&#39;config&#39;
-            //&lt;/feature&gt;
+            'extend'
+            //<feature classSystem.statics>
+            ,'statics'
+            //</feature>
+            //<feature classSystem.inheritableStatics>
+            ,'inheritableStatics'
+            //</feature>
+            //<feature classSystem.mixins>
+            ,'mixins'
+            //</feature>
+            //<feature classSystem.platformConfig>
+            ,'platformConfig'
+            //</feature>
+            //<feature classSystem.config>
+            ,'config'
+            //</feature>
         ];
 
         if (Class) {
             cls = new ExtClass(Class, members);
-            // The &#39;constructor&#39; is given as &#39;Class&#39; but also needs to be on prototype
+            // The 'constructor' is given as 'Class' but also needs to be on prototype
             cls.prototype.constructor = Class;
         } else {
             cls = new ExtClass(members);
@@ -513,9 +496,6 @@
 
         return cls;
     };
-    //&lt;/feature&gt;
+    //</feature>
 
 }());
-</pre>
-</body>
-</html>
