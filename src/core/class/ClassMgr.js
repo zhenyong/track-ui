@@ -1,10 +1,10 @@
 // @tag class
 /**
- * @class Tk.ClassManager
+ * @class Tk.ClassMgr
  *
- * Tk.ClassManager 管理所有的类以及类名到类（构造函数）的映射
+ * Tk.ClassMgr 管理所有的类以及类名到类（构造函数）的映射
  * 
- * 通常都不会直接调用 Tk.ClassManager,而是用下面这些方便的调用：
+ * 通常都不会直接调用 Tk.ClassMgr,而是用下面这些方便的调用：
  *
  * - {@link Tk#define Tk.define}
  * - {@link Tk#create Tk.create}
@@ -16,7 +16,7 @@
  *     Tk.define(className, properties);
  *
  *  `properties` 是一个字面量对象，会应用到类上。
- * {@link Tk.ClassManager#create} 有更详细的介绍
+ * {@link Tk.ClassMgr#create} 有更详细的介绍
  *
  *     Tk.define('Person', {
  *          name: 'Unknown',
@@ -125,8 +125,8 @@
  *
  * @singleton
  */
-Tk.ClassManager = (function(Class, alias, arraySlice, arrayFrom, global) {
-    // @define Tk.ClassManager
+Tk.ClassMgr = (function(Class, alias, arraySlice, arrayFrom, global) {
+    // @define Tk.ClassMgr
     // @require Tk.Class
     // @require Tk.Function
     // @require Tk.Array
@@ -388,7 +388,7 @@ Tk.ClassManager = (function(Class, alias, arraySlice, arrayFrom, global) {
             /**
              * 创建一个命名空间，设置值
              *
-             *     Tk.ClassManager.setNamespace('MyCompany.pkg.Example', someObject);
+             *     Tk.ClassMgr.setNamespace('MyCompany.pkg.Example', someObject);
              *
              *     alert(MyCompany.pkg.Example === someObject); // alerts true
              *
@@ -413,7 +413,7 @@ Tk.ClassManager = (function(Class, alias, arraySlice, arrayFrom, global) {
              *
              * @param {String} name
              * @param {Object} value
-             * @return {Tk.ClassManager} this
+             * @return {Tk.ClassMgr} this
              */
             set: function(name, value) {
                 var targetName = Manager.getName(value);
@@ -437,7 +437,7 @@ Tk.ClassManager = (function(Class, alias, arraySlice, arrayFrom, global) {
              * 通过类或者示例获得字符串类名
              * 通常这么用 {@link Tk#getClassName}.
              *
-             *     Tk.ClassManager.getName(Tk.Action); // returns "Tk.Action"
+             *     Tk.ClassMgr.getName(Tk.Action); // returns "Tk.Action"
              *
              * @param {Tk.Class/Object} object
              * @return {String} className
@@ -564,13 +564,13 @@ Tk.ClassManager = (function(Class, alias, arraySlice, arrayFrom, global) {
                         if (mixinsIsArray) {
                             for (i = 0, temp = mixins.length; i < temp; ++i) {
                                 if (Tk.isString(cls = mixins[i])) {
-                                    mixins[i] = Tk.ClassManager.get(cls);
+                                    mixins[i] = Tk.ClassMgr.get(cls);
                                 }
                             }
                         } else if (mixins) {
                             for (key in mixins) {
                                 if (Tk.isString(cls = mixins[key])) {
-                                    mixins[key] = Tk.ClassManager.get(cls);
+                                    mixins[key] = Tk.ClassMgr.get(cls);
                                 }
                             }
                         }
@@ -681,11 +681,11 @@ Tk.ClassManager = (function(Class, alias, arraySlice, arrayFrom, global) {
              *
              * @private
              * @param {String} name “后处理器”的名字，针对通过
-             * {@link Tk.ClassManager#registerPostprocessor} 注册的处理器
+             * {@link Tk.ClassMgr#registerPostprocessor} 注册的处理器
              * @param {String} offset 执行位置，四种值
              * 'first', 'last', or: 'before', 'after' (位置相对于第三个参数)
              * @param {String} relativeName
-             * @return {Tk.ClassManager} this
+             * @return {Tk.ClassMgr} this
              */
             setDefaultPostprocessorPosition: function(name, offset, relativeName) {
                 var defaultPostprocessors = this.defaultPostprocessors,
@@ -904,7 +904,7 @@ Tk.ClassManager = (function(Class, alias, arraySlice, arrayFrom, global) {
         },
 
         /**
-         * @inheritdoc Tk.ClassManager#getName
+         * @inheritdoc Tk.ClassMgr#getName
          * @member Tk
          * @method getClassName
          */
@@ -934,7 +934,7 @@ Tk.ClassManager = (function(Class, alias, arraySlice, arrayFrom, global) {
         },
 
         /**
-         * @inheritdoc Tk.ClassManager#getClass
+         * @inheritdoc Tk.ClassMgr#getClass
          * @member Tk
          * @method getClass
          */

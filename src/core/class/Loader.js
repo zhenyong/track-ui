@@ -10,10 +10,10 @@
 Tk.Loader = (new function() {  // jshint ignore:line
 // @define Tk.Loader
 // @require Tk.Class
-// @require Tk.ClassManager
+// @require Tk.ClassMgr
 
     var Loader = this,
-        Manager = Tk.ClassManager, // this is an instance of Tk.Inventory
+        Manager = Tk.ClassMgr, // this is an instance of Tk.Inventory
         Class = Tk.Class,
         dependencyProperties = ['extend', 'mixins'/*, 'requires'*/];
 

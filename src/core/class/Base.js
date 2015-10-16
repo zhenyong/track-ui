@@ -9,7 +9,7 @@
  */
 Tk.Base = (function() {
     // @define Tk.Base
-    // @uses Tk.ClassManager
+    // @uses Tk.ClassMgr
     var noArgs = [],
         baseStaticMember,
         baseStaticMembers = [],
