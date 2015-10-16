@@ -2,22 +2,21 @@
 /**
  * @class Tk.ClassManager
  *
- * Tk.ClassManager manages all classes and handles mapping from string class name to
- * actual class objects throughout the whole framework. It is not generally accessed directly, rather through
- * these convenient shorthands:
+ * Tk.ClassManager 管理所有的类以及类名到类（构造函数）的映射
+ * 
+ * 通常都不会直接调用 Tk.ClassManager,而是用下面这些方便的调用：
  *
  * - {@link Tk#define Tk.define}
  * - {@link Tk#create Tk.create}
- * - {@link Tk#widget Tk.widget}
  * - {@link Tk#getClass Tk.getClass}
  * - {@link Tk#getClassName Tk.getClassName}
  *
- * # Basic syntax:
+ * # 基本语法:
  *
  *     Tk.define(className, properties);
  *
- * in which `properties` is an object represent a collection of properties that apply to the class. See
- * {@link Tk.ClassManager#create} for more detailed instructions.
+ *  `properties` 是一个字面量对象，会应用到类上。
+ * {@link Tk.ClassManager#create} 有更详细的介绍
  *
  *     Tk.define('Person', {
  *          name: 'Unknown',
@@ -38,10 +37,10 @@
  *     var aaron = new Person("Aaron");
  *     aaron.eat("Sandwich"); // alert("I'm eating: Sandwich");
  *
- * Tk.Class has a powerful set of extensible {@link Tk.Class#registerPreprocessor pre-processors} which takes care of
- * everything related to class creation, including but not limited to inheritance, mixins, configuration, statics, etc.
+ * Tk.Class 有一组强大的可扩展的 {@link Tk.Class#registerPreprocessor pre-processors} 跟类创建相关的预处理器，
+ * 默认包括 inheritance, mixins, statics 等等，你可以自定义预处理器，让所有类都获得你要的效果
  *
- * # Inheritance:
+ * # extend 继承 预处理器:
  *
  *     Tk.define('Developer', {
  *          extend: 'Person',
@@ -49,7 +48,7 @@
  *          constructor: function(name, isGeek) {
  *              this.isGeek = isGeek;
  *
- *              // Apply a method from the parent class' prototype
+ *              // 调用父类的' 原型方法
  *              this.callParent([name]);
  *          },
  *
@@ -66,9 +65,9 @@
  *     jacky.code("JavaScript"); // alert("I'm coding in: JavaScript");
  *                               // alert("I'm eating: Bugs");
  *
- * See {@link Tk.Base#callParent} for more details on calling superclass' methods
+ *  {@link Tk.Base#callParent} 包含更多调用父类方法的介绍
  *
- * # Mixins:
+ * # mixins 混合 预处理器:
  *
  *     Tk.define('CanPlayGuitar', {
  *          playGuitar: function() {
@@ -122,8 +121,7 @@
  *                // alert("[Playing guitar at the same time...]");
  *                // alert("F#...G...D...A");
  *
- * Also see {@link Tk.Base#statics} and {@link Tk.Base#self} for more details on accessing
- * static properties within class methods
+ * 查看 {@link Tk.Base#statics} 和 {@link Tk.Base#self} 了解关于获取静态属性和静态方法
  *
  * @singleton
  */
@@ -142,32 +140,14 @@ var makeCtor = Tk.Class.makeCtor,
     namespaceCache = {
         Tk: {
             name: 'Tk',
-            value: Tk // specially added for sandbox (Tk === global.Ext6)
+            value: Tk // specially added for sandbox (Tk === global.Tk6)
         }
-        /*
-        'Tk.grid': {
-            name: 'grid',
-            parent: namespaceCache['Tk']
-        },
-        'Tk.grid.Panel': {
-            name: 'Panel',
-            parent: namespaceCache['Tk.grid']
-        },
-        ...
-
-        Also,
-        'MyApp': {
-            name: 'MyApp',
-            value: MyApp
-        }
-        */
     },
 
     Manager = Tk.apply(new Tk.Inventory(), {
         /**
          * @property {Object} classes
-         * All classes which were defined through the ClassManager. Keys are the
-         * name of the classes and the values are references to the classes.
+         * 存放所有定义的类映射<string类名：Class类（构造函数）>
          * @private
          */
         classes: {},
@@ -195,18 +175,12 @@ var makeCtor = Tk.Class.makeCtor,
         instantiators: [],
 
         /**
-         * Checks if a class has already been created.
+         * 检测一个类是否已经定义
          *
          * @param {String} className
          * @return {Boolean} exist
          */
         isCreated: function(className) {
-            //<debug>
-            if (typeof className !== 'string' || className.length < 1) {
-                throw new Error("[Tk.ClassManager] Invalid classname, must be a string and must not be empty");
-            }
-            //</debug>
-
             if (Manager.classes[className] || Manager.existCache[className]) {
                 return true;
             }
@@ -333,38 +307,6 @@ var makeCtor = Tk.Class.makeCtor,
         $namespaceCache: namespaceCache,
 
         /**
-         * See `{@link Tk#addRootNamespaces Tk.addRootNamespaces}`.
-         * @since 6.0.0
-         * @private
-         */
-        addRootNamespaces: function (namespaces) {
-            for (var name in namespaces) {
-                namespaceCache[name] = {
-                    name: name,
-                    value: namespaces[name]
-                };
-            }
-        },
-
-        /**
-         * Clears the namespace lookup cache. After application launch, this cache can
-         * often contain several hundred entries that are unlikely to be needed again.
-         * These will be rebuilt as needed, so it is harmless to clear this cache even
-         * if its results will be used again.
-         * @since 6.0.0
-         * @private
-         */
-        clearNamespaceCache: function () {
-            nameLookupStack.length = 0;
-
-            for (var name in namespaceCache) {
-                if (!namespaceCache[name].value) {
-                    delete namespaceCache[name];
-                }
-            }
-        },
-
-        /**
          * Return the namespace cache entry for the given a class name or namespace (e.g.,
          * "Tk.grid.Panel").
          *
@@ -373,7 +315,7 @@ var makeCtor = Tk.Class.makeCtor,
          * @return {String} return.name The leaf name ("Panel" for "Tk.grid.Panel").
          * @return {Object} return.parent The entry of the parent namespace (i.e., "Tk.grid").
          * @return {Object} return.value The namespace object. This is only set for
-         * top-level namespace entries to support renaming them for sandboxing ("Ext6" vs
+         * top-level namespace entries to support renaming them for sandboxing ("Tk6" vs
          * "Tk").
          * @since 6.0.0
          * @private
@@ -446,7 +388,7 @@ var makeCtor = Tk.Class.makeCtor,
         },
 
         /**
-         * Creates a namespace and assign the `value` to the created object.
+         * 创建一个命名空间，设置值
          *
          *     Tk.ClassManager.setNamespace('MyCompany.pkg.Example', someObject);
          *
@@ -469,7 +411,7 @@ var makeCtor = Tk.Class.makeCtor,
         },
 
         /**
-         * Sets a name reference to a class.
+         * 设置一个字符串类名（命名空间）映射到一个类
          *
          * @param {String} name
          * @param {Object} value
@@ -488,7 +430,7 @@ var makeCtor = Tk.Class.makeCtor,
         },
 
         /**
-         * Retrieve a class by its name.
+         * 通过字符串类名获得类
          *
          * @param {String} name
          * @return {Tk.Class} class
@@ -498,63 +440,8 @@ var makeCtor = Tk.Class.makeCtor,
         },
 
         /**
-         * Adds a batch of class name to alias mappings.
-         * @param {Object} aliases The set of mappings of the form.
-         * className : [values...]
-         */
-        addNameAliasMappings: function(aliases) {
-            Manager.addAlias(aliases);
-        },
-
-        /**
-         *
-         * @param {Object} alternates The set of mappings of the form
-         * className : [values...]
-         */
-        addNameAlternateMappings: function (alternates) {
-            Manager.addAlternate(alternates);
-        },
-
-        /**
-         * Get a reference to the class by its alias.
-         *
-         * @param {String} alias
-         * @return {Tk.Class} class
-         */
-        getByAlias: function(alias) {
-            return Manager.get(Manager.getNameByAlias(alias));
-        },
-
-        /**
-         * Get a component class name from a config object.
-         * @param {Object} config The config object.
-         * @param {String} [aliasPrefix] A prefix to use when getting
-         * a class name by alias.
-         * @return {Tk.Class} The class.
-         *
-         * @private
-         */
-        getByConfig: function(config, aliasPrefix) {
-            var xclass = config.xclass,
-                name;
-
-            if (xclass) {
-                name = xclass;
-            } else {
-                name = config.xtype;
-                if (name) {
-                    aliasPrefix = 'widget.';
-                } else {
-                    name = config.type;
-                }
-                name = Manager.getNameByAlias(aliasPrefix + name);
-            }
-            return Manager.get(name);
-        },        
-
-        /**
-         * Get the name of the class by its reference or its instance. This is
-         * usually invoked by the shorthand {@link Tk#getClassName}.
+         * 通过类或者示例获得字符串类名
+         * 通常这么用 {@link Tk#getClassName}.
          *
          *     Tk.ClassManager.getName(Tk.Action); // returns "Tk.Action"
          *
@@ -566,9 +453,8 @@ var makeCtor = Tk.Class.makeCtor,
         },
 
         /**
-         * Get the class of the provided object; returns null if it's not an instance
-         * of any class created with Tk.define. This is usually invoked by the
-         * shorthand {@link Tk#getClass}.
+         * 通过示例获得类，如果不是一个 Tk 管理的类示例则返回 null
+         * 通常这么用 {@link Tk#getClass}.
          *
          *     var component = new Tk.Component();
          *
@@ -582,15 +468,13 @@ var makeCtor = Tk.Class.makeCtor,
         },
 
         /**
-         * Defines a class.
+         * 定义一个类
          * @deprecated Use {@link Tk#define} instead, as that also supports creating overrides.
          * @private
          */
         create: function(className, data, createdFn) {
             //<debug>
-            if (className != null && typeof className !== 'string') {
-                throw new Error("[Tk.define] Invalid class name '" + className + "' specified, must be a non-empty string");
-            }
+            //警告 classname 不合法
             //</debug>
 
             var ctor = makeCtor(className);
@@ -599,12 +483,7 @@ var makeCtor = Tk.Class.makeCtor,
             }
 
             //<debug>
-            if (className) {
-                if (Manager.classes[className]) {
-                    Tk.log.warn("[Tk.define] Duplicate class name '" + className + "' specified, must be a non-empty string");
-                }
-                ctor.name = className;
-            }
+            //TODO 警告重复
             //</debug>
 
             data.$className = className;
@@ -683,44 +562,13 @@ var makeCtor = Tk.Class.makeCtor,
         createOverride: function (className, data, createdFn) {
             var me = this,
                 overriddenClassName = data.override,
-                requires = data.requires,
                 uses = data.uses,
                 mixins = data.mixins,
                 mixinsIsArray,
                 compat = 1, // default if 'compatibility' is not specified
                 depedenciesLoaded,
                 classReady = function () {
-                    var cls, dependencies, i, key, temp;
-
-                    if (!depedenciesLoaded) {
-                        dependencies = requires ? requires.slice(0) : [];
-
-                        if (mixins) {
-                            if (!(mixinsIsArray = mixins instanceof Array)) {
-                                for (key in mixins) {
-                                    if (Tk.isString(cls = mixins[key])) {
-                                        dependencies.push(cls);
-                                    }
-                                }
-                            } else {
-                                for (i = 0, temp = mixins.length; i < temp; ++i) {
-                                    if (Tk.isString(cls = mixins[i])) {
-                                        dependencies.push(cls);
-                                    }
-                                }
-                            }
-                        }
-
-                        depedenciesLoaded = true;
-                        if (dependencies.length) {
-                            // Since the override is going to be used (its target class is
-                            // now created), we need to fetch the required classes for the
-                            // override and call us back once they are loaded:
-                            Tk.require(dependencies, classReady);
-                            return;
-                        }
-                        // else we have no dependencies, so proceed
-                    }
+                    var cls, i, key, temp;
 
                     // transform mixin class names into class references, This
                     // loop can handle both the array and object forms of
@@ -746,22 +594,9 @@ var makeCtor = Tk.Class.makeCtor,
                     // We don't want to apply these:
                     delete data.override;
                     delete data.compatibility;
-                    delete data.requires;
                     delete data.uses;
 
                     Tk.override(cls, data);
-
-
-                    // This pushes the overriding file itself into Ext.Loader.history
-                    // Hence if the target class never exists, the overriding file will
-                    // never be included in the build.
-                    Ext.Loader.history.push(className);
-
-                    if (uses) {
-                        // This "hides" from the Cmd auto-dependency scanner since
-                        // the reference is circular (Loader requires us).
-                        Ext['Loader'].addUsedClasses(uses); // get these classes too!
-                    }
 
                     if (createdFn) {
                         createdFn.call(cls, cls); // last but not least!
@@ -786,64 +621,6 @@ var makeCtor = Tk.Class.makeCtor,
             return me;
         },
 
-        /**
-         * Instantiate a class by its alias. This is usually invoked by the
-         * shorthand {@link Tk#createByAlias}.
-         *
-         * If {@link Tk.Loader} is {@link Tk.Loader#setConfig enabled} and the class
-         * has not been defined yet, it will attempt to load the class via synchronous
-         * loading.
-         *
-         *     var window = Tk.createByAlias('widget.window', { width: 600, height: 800 });
-         *
-         * @param {String} alias
-         * @param {Object...} args Additional arguments after the alias will be passed to the
-         * class constructor.
-         * @return {Object} instance
-         */
-        instantiateByAlias: function() {
-            var alias = arguments[0],
-                args = arraySlice.call(arguments),
-                className = this.getNameByAlias(alias);
-
-            //<debug>
-            if (!className) {
-                throw new Error("[Tk.createByAlias] Unrecognized alias: " + alias);
-            }
-            //</debug>
-
-            args[0] = className;
-
-            return Tk.create.apply(Tk, args);
-        },
-
-        //<deprecated since=5.0>
-        /**
-         * Instantiate a class by either full name, alias or alternate name
-         * @param {String} name
-         * @param {Mixed} args Additional arguments after the name will be passed to the class' constructor.
-         * @return {Object} instance
-         * @deprecated 5.0 Use Tk.create() instead.
-         */
-        instantiate: function() {
-            //<debug>
-            Tk.log.warn('Tk.ClassManager.instantiate() is deprecated.  Use Tk.create() instead.');
-            //</debug>
-            return Tk.create.apply(Tk, arguments);
-        },
-        //</deprecated>
-
-        /**
-         * @private
-         * @param name
-         * @param args
-         */
-        dynInstantiate: function(name, args) {
-            args = arrayFrom(args, true);
-            args.unshift(name);
-
-            return Tk.create.apply(Tk, args);
-        },
 
         /**
          * @private
@@ -885,7 +662,7 @@ var makeCtor = Tk.Class.makeCtor,
         defaultPostprocessors: [],
 
         /**
-         * Register a post-processor function.
+         * 注册类定义的“后处理器”
          *
          * @private
          * @param {String} name
@@ -912,27 +689,13 @@ var makeCtor = Tk.Class.makeCtor,
         },
 
         /**
-         * Set the default post processors array stack which are applied to every class.
+         * 用于调整“后处理器”的执行顺序
          *
          * @private
-         * @param {String/Array} postprocessors The name of a registered post processor or an array of registered names.
-         * @return {Tk.ClassManager} this
-         */
-        setDefaultPostprocessors: function(postprocessors) {
-            this.defaultPostprocessors = arrayFrom(postprocessors);
-
-            return this;
-        },
-
-        /**
-         * Insert this post-processor at a specific position in the stack, optionally relative to
-         * any existing post-processor
-         *
-         * @private
-         * @param {String} name The post-processor name. Note that it needs to be registered with
-         * {@link Tk.ClassManager#registerPostprocessor} before this
-         * @param {String} offset The insertion position. Four possible values are:
-         * 'first', 'last', or: 'before', 'after' (relative to the name provided in the third argument)
+         * @param {String} name “后处理器”的名字，针对通过
+         * {@link Tk.ClassManager#registerPostprocessor} 注册的处理器
+         * @param {String} offset 执行位置，四种值
+         * 'first', 'last', or: 'before', 'after' (位置相对于第三个参数)
          * @param {String} relativeName
          * @return {Tk.ClassManager} this
          */
@@ -965,89 +728,27 @@ var makeCtor = Tk.Class.makeCtor,
         }
     });
 
-    /**
-     * @cfg xtype
-     * @member Tk.Class
-     * @inheritdoc Tk.Component#cfg-xtype
-     */
 
     /**
      * @cfg {String} override
      * @member Tk.Class
-     * Overrides members of the specified `target` class.
+     * 覆盖某个类的成员
      * 
-     * **NOTE:** the overridden class must have been defined using 
-     * {@link Tk#define Tk.define} in order to use the `override` config.
-     * 
-     * Methods defined on the overriding class will not automatically call the methods of 
-     * the same name in the ancestor class chain.  To call the parent's method of the 
-     * same name you must call {@link Tk.Base#callParent callParent}.  To skip the 
-     * method of the overridden class and call its parent you will instead call 
+     * **NOTE:** 目标类必须是通过 {@link Tk#define Tk.define} 定义的类
+     *
+     * 覆盖后的方法并不会自动调用被覆盖的方法，你要调用"父亲的"方法则要在方法体内，调用
+     * {@link Tk.Base#callParent callParent}
+     * 如果要跳过被覆盖的方法，而直接调用目标类的父类的方法，则使用 
      * {@link Tk.Base#callSuper callSuper}.
      *
-     * See {@link Tk#define Tk.define} for additional usage examples.
+     * 更多例子请查看 {@link Tk#define Tk.define}
      */
-    
-    //<feature classSystem.alias>
-    /**
-     * @cfg {String/String[]} alias
-     * @member Tk.Class
-     * List of short aliases for class names. An alias consists of a namespace and a name
-     * concatenated by a period as &#60;namespace&#62;.&#60;name&#62;
-     *
-     *  - **namespace** - The namespace describes what kind of alias this is and must be
-     *  all lowercase.
-     *  - **name** - The name of the alias which allows the lazy-instantiation via the
-     *  alias. The name shouldn't contain any periods.
-     *
-     * A list of namespaces and the usages are:
-     *
-     *  - **feature** - {@link Tk.grid.Panel Grid} features
-     *  - **plugin** - Plugins
-     *  - **store** - {@link Tk.data.Store}
-     *  - **widget** - Components
-     *
-     * Most useful for defining xtypes for widgets:
-     *
-     *     Tk.define('MyApp.CoolPanel', {
-     *         extend: 'Tk.panel.Panel',
-     *         alias: ['widget.coolpanel'],
-     *         title: 'Yeah!'
-     *     });
-     *
-     *     // Using Tk.create
-     *     Tk.create('widget.coolpanel');
-     *
-     *     // Using the shorthand for defining widgets by xtype
-     *     Tk.widget('panel', {
-     *         items: [
-     *             {xtype: 'coolpanel', html: 'Foo'},
-     *             {xtype: 'coolpanel', html: 'Bar'}
-     *         ]
-     *     });
-     */
-    Manager.registerPostprocessor('alias', function(name, cls, data) {
-        //<debug>
-        Tk.classSystemMonitor && Tk.classSystemMonitor(name, 'Tk.ClassManager#aliasPostProcessor', arguments);
-        //</debug>
-        
-        var aliases = Tk.Array.from(data.alias),
-            i, ln;
-
-        for (i = 0,ln = aliases.length; i < ln; i++) {
-            alias = aliases[i];
-
-            this.addAlias(cls, alias);
-        }
-
-    }, ['xtype', 'alias']);
-    //</feature>
 
     //<feature classSystem.singleton>
     /**
      * @cfg {Boolean} singleton
      * @member Tk.Class
-     * When set to true, the class will be instantiated as singleton.  For example:
+     * 如果为 true，则会创建一个类的单例，例如：
      *
      *     Tk.define('Logger', {
      *         singleton: true,
@@ -1059,10 +760,6 @@ var makeCtor = Tk.Class.makeCtor,
      *     Logger.log('Hello');
      */
     Manager.registerPostprocessor('singleton', function(name, cls, data, fn) {
-        //<debug>
-        Tk.classSystemMonitor && Tk.classSystemMonitor(name, 'Tk.ClassManager#singletonPostProcessor', arguments);
-        //</debug>
-        
         if (data.singleton) {
             fn.call(this, name, new cls(), data);
         }
@@ -1070,51 +767,6 @@ var makeCtor = Tk.Class.makeCtor,
             return true;
         }
         return false;
-    });
-    //</feature>
-
-    //<feature classSystem.alternateClassName>
-    /**
-     * @cfg {String/String[]} alternateClassName
-     * @member Tk.Class
-     * Defines alternate names for this class.  For example:
-     *
-     *     Tk.define('Developer', {
-     *         alternateClassName: ['Coder', 'Hacker'],
-     *         code: function(msg) {
-     *             alert('Typing... ' + msg);
-     *         }
-     *     });
-     *
-     *     var joe = Tk.create('Developer');
-     *     joe.code('stackoverflow');
-     *
-     *     var rms = Tk.create('Hacker');
-     *     rms.code('hack hack');
-     */
-    Manager.registerPostprocessor('alternateClassName', function(name, cls, data) {
-        //<debug>
-        Tk.classSystemMonitor && Tk.classSystemMonitor(name, 'Tk.ClassManager#alternateClassNamePostprocessor', arguments);
-        //</debug>
-        
-        var alternates = data.alternateClassName,
-            i, ln, alternate;
-
-        if (!(alternates instanceof Array)) {
-            alternates = [alternates];
-        }
-
-        for (i = 0, ln = alternates.length; i < ln; i++) {
-            alternate = alternates[i];
-
-            //<debug>
-            if (typeof alternate !== 'string') {
-                throw new Error("[Tk.define] Invalid alternate of: '" + alternate + "' for class: '" + name + "'; must be a valid string");
-            }
-            //</debug>
-
-            this.set(alternate, cls);
-        }
     });
     //</feature>
 
@@ -1165,113 +817,6 @@ var makeCtor = Tk.Class.makeCtor,
         var target = Class.isInstance ? Class.self : Class;
 
         delete target.prototype.debugHooks;
-    });
-
-    /**
-     * @cfg {Object} deprecated
-     * The object given has properties that describe the versions at which the deprecations
-     * apply.
-     *
-     * The purpose of the `deprecated` declaration is to enable development mode to give
-     * suitable error messages when deprecated methods or properties are used. Methods can
-     * always be injected to provide this feedback, but properties can only be handled on
-     * some browsers (those that support `Object.defineProperty`).
-     *
-     * In some cases, deprecated methods can be restored to their previous behavior or
-     * added back if they have been removed.
-     *
-     * The structure of a `deprecated` declaration is this:
-     *
-     *      Tk.define('Foo.bar.Class', {
-     *          ...
-     *
-     *          deprecated: {
-     *              // Optional package name - default is the framework (ext or touch)
-     *              name: 'foobar',
-     *
-     *              '5.0': {
-     *                  methods: {
-     *                      // Throws: '"removedMethod" is deprecated.'
-     *                      removedMethod: null,
-     *
-     *                      // Throws: '"oldMethod" is deprecated. Please use "newMethod" instead.'
-     *                      oldMethod: 'newMethod',
-     *
-     *                      // When this block is enabled, this method is applied as an
-     *                      // override. Otherwise you get same as "removeMethod".
-     *                      method: function () {
-     *                          // Do what v5 "method" did. If "method" exists in newer
-     *                          // versions callParent can call it. If 5.1 has "method"
-     *                          // then it would be next in line, otherwise 5.2 and last
-     *                          // would be the current class.
-     *                      },
-     *
-     *                      moreHelpful: {
-     *                          message: 'Something helpful to do instead.',
-     *                          fn: function () {
-     *                              // The v5 "moreHelpful" method to use when enabled.
-     *                          }
-     *                      }
-     *                  },
-     *                  properties: {
-     *                      // Throws: '"removedProp" is deprecated.'
-     *                      removedProp: null,
-     *
-     *                      // Throws: '"oldProp" is deprecated. Please use "newProp" instead.'
-     *                      oldProp: 'newProp',
-     *
-     *                      helpful: {
-     *                          message: 'Something helpful message about what to do.'
-     *                      }
-     *                      ...
-     *                  },
-     *                  statics: {
-     *                      methods: {
-     *                          ...
-     *                      },
-     *                      properties: {
-     *                          ...
-     *                      },
-     *                  }
-     *              },
-     *
-     *              '5.1': {
-     *                  ...
-     *              },
-     *
-     *              '5.2': {
-     *                  ...
-     *              }
-     *          }
-     *      });
-     *
-     * The primary content of `deprecated` are the version number keys. These indicate
-     * a version number where methods or properties were deprecated. These versions are
-     * compared to the version reported by `Tk.getCompatVersion` to determine the action
-     * to take for each "block".
-     *
-     * When the compatibility version is set to a value less than a version number key,
-     * that block is said to be "enabled". For example, if a method was deprecated in
-     * version 5.0 but the desired compatibility level is 4.2 then the block is used to
-     * patch methods and (to some degree) restore pre-5.0 compatibility.
-     *
-     * When multiple active blocks have the same method name, each method is applied as
-     * an override in reverse order of version. In the above example, if a method appears
-     * in the "5.0", "5.1" and "5.2" blocks then the "5.2" method is applied as an override
-     * first, followed by the "5.1" method and finally the "5.0" method. This means that
-     * the `callParent` from the "5.0" method calls the "5.1" method which calls the
-     * "5.2" method which can (if applicable) call the current version.
-     */
-    Manager.registerPostprocessor('deprecated', function(name, Class, data) {
-        //<debug>
-        Tk.classSystemMonitor && Tk.classSystemMonitor(Class, 'Tk.Class#deprecated', arguments);
-        //</debug>
-
-        // may already have an instance here in the case of singleton
-        var target = Class.isInstance ? Class.self : Class;
-        target.addDeprecations(data.deprecated);
-
-        delete target.prototype.deprecated;
     });
 
     Tk.apply(Tk, {
@@ -1353,92 +898,15 @@ var makeCtor = Tk.Class.makeCtor,
 
             // Still not existing at this point, try to load it via synchronous mode as the last resort
             if (!cls) {
-                //<debug>
-                //<if nonBrowser>
-                !isNonBrowser &&
-                //</if>
-                Ext.log.warn("[Ext.Loader] Synchronously loading '" + name + "'; consider adding " +
-                     "Ext.require('" + name + "') above Ext.onReady");
-                //</debug>
-
-                Ext.syncRequire(name);
-
-                cls = Manager.get(name);
+                //TODO 如果创建没有定义的要提醒
             }
 
             return Manager.getInstantiator(args.length)(cls, args);
         },
 
-        /**
-         * Convenient shorthand to create a widget by its xtype or a config object.
-         *
-         *      var button = Tk.widget('button'); // Equivalent to Tk.create('widget.button');
-         *
-         *      var panel = Tk.widget('panel', { // Equivalent to Tk.create('widget.panel')
-         *          title: 'Panel'
-         *      });
-         *
-         *      var grid = Tk.widget({
-         *          xtype: 'grid',
-         *          ...
-         *      });
-         *
-         * If a {@link Tk.Component component} instance is passed, it is simply returned.
-         *
-         * @member Tk
-         * @param {String} [name] The xtype of the widget to create.
-         * @param {Object} [config] The configuration object for the widget constructor.
-         * @return {Object} The widget instance
-         */
-        widget: function(name, config) {
-            // forms:
-            //      1: (xtype)
-            //      2: (xtype, config)
-            //      3: (config)
-            //      4: (xtype, component)
-            //      5: (component)
-            //      
-            var xtype = name,
-                alias, className, T;
-
-            if (typeof xtype !== 'string') { // if (form 3 or 5)
-                // first arg is config or component
-                config = name; // arguments[0]
-                xtype = config.xtype;
-                className = config.xclass;
-            } else {
-                config = config || {};
-            }
-
-            if (config.isComponent) {
-                return config;
-            }
-
-            if (!className) {
-                alias = 'widget.' + xtype;
-                className = Manager.getNameByAlias(alias);
-            }
-
-            // this is needed to support demand loading of the class
-            if (className) {
-                T = Manager.get(className);
-            }
-
-            if (!T) {
-                return Tk.create(className || alias, config);
-            }
-            return new T(config);
-        },
 
         /**
-         * @inheritdoc Tk.ClassManager#instantiateByAlias
-         * @member Tk
-         * @method createByAlias
-         */
-        createByAlias: alias(Manager, 'instantiateByAlias'),
-
-        /**
-         * Defines a class or override. A basic class is defined like this:
+         * 定义或者覆盖类. 这么用:
          *
          *      Tk.define('My.awesome.Class', {
          *          someProperty: 'something',
@@ -1454,7 +922,7 @@ var makeCtor = Tk.Class.makeCtor,
          *
          *      obj.someMethod('Say '); // alerts 'Say something'
          *
-         * To create an anonymous class, pass `null` for the `className`:
+         * 创建匿名类的话，把类名设置为 `null`
          *
          *      Tk.define(null, {
          *          constructor: function () {
@@ -1462,13 +930,10 @@ var makeCtor = Tk.Class.makeCtor,
          *          }
          *      });
          *
-         * In some cases, it is helpful to create a nested scope to contain some private
-         * properties. The best way to do this is to pass a function instead of an object
-         * as the second parameter. This function will be called to produce the class
-         * body:
+         * 有时候，你创建的类有些私有信息，你不希望外部访问到。通常这么做
          *
          *      Tk.define('MyApp.foo.Bar', function () {
-         *          var id = 0;
+         *          var id = 0;//外部访问不了 id 了
          *
          *          return {
          *              nextId: function () {
@@ -1476,11 +941,9 @@ var makeCtor = Tk.Class.makeCtor,
          *              }
          *          };
          *      });
-         * 
-         * _Note_ that when using override, the above syntax will not override successfully, because
-         * the passed function would need to be executed first to determine whether or not the result 
-         * is an override or defining a new object. As such, an alternative syntax that immediately 
-         * invokes the function can be used:
+         *
+         * 当使用 override 的时候，上面的语法不太合适，因为传递的方法需要先执行，然后根据返回的结果
+         * 去判断这次是要定义一个新类，还是覆盖。因此，最好让函数立刻执行，返回成员对象
          * 
          *      Tk.define('MyApp.override.BaseOverride', function () {
          *          var counter = 0;
@@ -1494,9 +957,7 @@ var makeCtor = Tk.Class.makeCtor,
          *      }());
          * 
          *
-         * When using this form of `Tk.define`, the function is passed a reference to its
-         * class. This can be used as an efficient way to access any static properties you
-         * may have:
+         * 像下面这样用 `Tk.define`, 你就可以方便获得类本身的静态成员
          *
          *      Tk.define('MyApp.foo.Bar', function (Bar) {
          *          return {
@@ -1512,145 +973,7 @@ var makeCtor = Tk.Class.makeCtor,
          *          };
          *      });
          *
-         * To define an override, include the `override` property. The content of an
-         * override is aggregated with the specified class in order to extend or modify
-         * that class. This can be as simple as setting default property values or it can
-         * extend and/or replace methods. This can also extend the statics of the class.
-         *
-         * One use for an override is to break a large class into manageable pieces.
-         *
-         *      // File: /src/app/Panel.js
-         *
-         *      Tk.define('My.app.Panel', {
-         *          extend: 'Tk.panel.Panel',
-         *          requires: [
-         *              'My.app.PanelPart2',
-         *              'My.app.PanelPart3'
-         *          ]
-         *
-         *          constructor: function (config) {
-         *              this.callParent(arguments); // calls Tk.panel.Panel's constructor
-         *              //...
-         *          },
-         *
-         *          statics: {
-         *              method: function () {
-         *                  return 'abc';
-         *              }
-         *          }
-         *      });
-         *
-         *      // File: /src/app/PanelPart2.js
-         *      Tk.define('My.app.PanelPart2', {
-         *          override: 'My.app.Panel',
-         *
-         *          constructor: function (config) {
-         *              this.callParent(arguments); // calls My.app.Panel's constructor
-         *              //...
-         *          }
-         *      });
-         *
-         * Another use of overrides is to provide optional parts of classes that can be
-         * independently required. In this case, the class may even be unaware of the
-         * override altogether.
-         *
-         *      Tk.define('My.ux.CoolTip', {
-         *          override: 'Tk.tip.ToolTip',
-         *
-         *          constructor: function (config) {
-         *              this.callParent(arguments); // calls Tk.tip.ToolTip's constructor
-         *              //...
-         *          }
-         *      });
-         *
-         * The above override can now be required as normal.
-         *
-         *      Tk.define('My.app.App', {
-         *          requires: [
-         *              'My.ux.CoolTip'
-         *          ]
-         *      });
-         *
-         * Overrides can also contain statics, inheritableStatics, or privates:
-         *
-         *      Tk.define('My.app.BarMod', {
-         *          override: 'Tk.foo.Bar',
-         *
-         *          statics: {
-         *              method: function (x) {
-         *                  return this.callParent([x * 2]); // call Tk.foo.Bar.method
-         *              }
-         *          }
-         *      });
-         * 
-         * Starting in version 4.2.2, overrides can declare their `compatibility` based
-         * on the framework version or on versions of other packages. For details on the
-         * syntax and options for these checks, see `Tk.checkVersion`.
-         * 
-         * The simplest use case is to test framework version for compatibility:
-         * 
-         *      Tk.define('App.overrides.grid.Panel', {
-         *          override: 'Tk.grid.Panel',
-         *
-         *          compatibility: '4.2.2', // only if framework version is 4.2.2
-         *
-         *          //...
-         *      });
-         * 
-         * An array is treated as an OR, so if any specs match, the override is
-         * compatible.
-         * 
-         *      Tk.define('App.overrides.some.Thing', {
-         *          override: 'Foo.some.Thing',
-         *
-         *          compatibility: [
-         *              '4.2.2',
-         *              'foo@1.0.1-1.0.2'
-         *          ],
-         *
-         *          //...
-         *      });
-         * 
-         * To require that all specifications match, an object can be provided:
-         * 
-         *      Tk.define('App.overrides.some.Thing', {
-         *          override: 'Foo.some.Thing',
-         *
-         *          compatibility: {
-         *              and: [
-         *                  '4.2.2',
-         *                  'foo@1.0.1-1.0.2'
-         *              ]
-         *          },
-         *
-         *          //...
-         *      });
-         * 
-         * Because the object form is just a recursive check, these can be nested:
-         * 
-         *      Tk.define('App.overrides.some.Thing', {
-         *          override: 'Foo.some.Thing',
-         *
-         *          compatibility: {
-         *              and: [
-         *                  '4.2.2',  // exactly version 4.2.2 of the framework *AND*
-         *                  {
-         *                      // either (or both) of these package specs:
-         *                      or: [
-         *                          'foo@1.0.1-1.0.2',
-         *                          'bar@3.0+'
-         *                      ]
-         *                  }
-         *              ]
-         *          },
-         *
-         *          //...
-         *      });
-         *
-         * IMPORTANT: An override is only included in a build if the class it overrides is
-         * required. Otherwise, the override, like the target class, is not included. In
-         * Sencha Cmd v4, the `compatibility` declaration can likewise be used to remove
-         * incompatible overrides from a build.
+         * 使用 `override` 覆盖一个类并不会产生一个新的类，只是原来的类被改造了。
          *
          * @param {String} className The class name to create in string dot-namespaced format, for example:
          * 'My.very.awesome.Class', 'FeedViewer.plugin.CoolPager'
@@ -1661,33 +984,19 @@ var makeCtor = Tk.Class.makeCtor,
          * @param {Object} data The key - value pairs of properties to apply to this class. Property names can be of any valid
          * strings, except those in the reserved listed below:
          *  
-         *  - {@link Tk.Class#cfg-alias alias}
-         *  - {@link Tk.Class#cfg-alternateClassName alternateClassName}
-         *  - {@link Tk.Class#cfg-cachedConfig cachedConfig}
-         *  - {@link Tk.Class#cfg-config config}
          *  - {@link Tk.Class#cfg-extend extend}
          *  - {@link Tk.Class#cfg-inheritableStatics inheritableStatics}
          *  - {@link Tk.Class#cfg-mixins mixins}
          *  - {@link Tk.Class#cfg-override override}
-         *  - {@link Tk.Class#cfg-platformConfig platformConfig}
-         *  - {@link Tk.Class#cfg-privates privates}
-         *  - {@link Tk.Class#cfg-requires requires}
          *  - `self`
          *  - {@link Tk.Class#cfg-singleton singleton}
          *  - {@link Tk.Class#cfg-statics statics}
-         *  - {@link Tk.Class#cfg-uses uses}
-         *  - {@link Tk.Class#cfg-xtype xtype} (for {@link Tk.Component Components} only)
          *
-         * @param {Function} [createdFn] Callback to execute after the class is created, the execution scope of which
-         * (`this`) will be the newly created class itself.
+         * @param {Function} [createdFn] 类创建完之后的回调，`this` 指向新创建的类
          * @return {Tk.Base}
          * @member Tk
          */
         define: function (className, data, createdFn) {
-            //<debug>
-            Tk.classSystemMonitor && Tk.classSystemMonitor(className, 'ClassManager#define', arguments);
-            //</debug>
-            
             if (data.override) {
                 Manager.classState[className] = 20;
                 return Manager.createOverride.apply(Manager, arguments);
@@ -1695,50 +1004,6 @@ var makeCtor = Tk.Class.makeCtor,
 
             Manager.classState[className] = 10;
             return Manager.create.apply(Manager, arguments);
-        },
-
-        /**
-         * Undefines a class defined using the #define method. Typically used
-         * for unit testing where setting up and tearing down a class multiple
-         * times is required.  For example:
-         * 
-         *     // define a class
-         *     Tk.define('Foo', {
-         *        ...
-         *     });
-         *     
-         *     // run test
-         *     
-         *     // undefine the class
-         *     Tk.undefine('Foo');
-         * @param {String} className The class name to undefine in string dot-namespaced format.
-         * @private
-         */
-        undefine: function(className) {
-            //<debug>
-            Tk.classSystemMonitor && Tk.classSystemMonitor(className, 'Tk.ClassManager#undefine', arguments);
-            //</debug>
-        
-            var classes = Manager.classes;
-
-            delete classes[className];
-            delete Manager.existCache[className];
-            delete Manager.classState[className];
-
-            Manager.removeName(className);
-
-            var entry = Manager.getNamespaceEntry(className),
-                scope = entry.parent ? Manager.lookupName(entry.parent, false) : Tk.global;
-
-            if (scope) {
-                // Old IE blows up on attempt to delete window property
-                try {
-                    delete scope[entry.name];
-                }
-                catch (e) {
-                    scope[entry.name] = undefined;
-                }
-            }
         },
 
         /**
@@ -1809,51 +1074,6 @@ var makeCtor = Tk.Class.makeCtor,
     });
 
     /**
-     * This function registers top-level (root) namespaces. This is needed for "sandbox"
-     * builds.
-     *
-     *      Tk.addRootNamespaces({
-     *          MyApp: MyApp,
-     *          Common: Common
-     *      });
-     *
-     * In the above example, `MyApp` and `Common` are top-level namespaces that happen
-     * to also be included in the sandbox closure. Something like this:
-     *
-     *      (function(Tk) {
-     *
-     *      Tk.sandboxName = 'Ext6';
-     *      Tk.isSandboxed = true;
-     *      Tk.buildSettings = { baseCSSPrefix: "x6-", scopeResetCSS: true };
-     *
-     *      var MyApp = MyApp || {};
-     *      Tk.addRootNamespaces({ MyApp: MyApp );
-     *
-     *      ... normal app.js goes here ...
-     *
-     *      })(this.Ext6 || (this.Ext6 = {}));
-     *
-     * The sandbox wrapper around the normally built `app.js` content has to take care
-     * of introducing top-level namespaces as well as call this method.
-     *
-     * @param {Object} namespaces
-     * @method addRootNamespaces
-     * @member Tk
-     * @since 6.0.0
-     * @private
-     */
-    Tk.addRootNamespaces = Manager.addRootNamespaces;
-
-    /**
-     * Old name for {@link Tk#widget}.
-     * @deprecated Use {@link Tk#widget} instead.
-     * @method createWidget
-     * @member Tk
-     * @private
-     */
-    Tk.createWidget = Tk.widget;
-
-    /**
      * Convenient alias for {@link Tk#namespace Tk.namespace}.
      * @inheritdoc Tk#namespace
      * @member Tk
@@ -1874,135 +1094,8 @@ var makeCtor = Tk.Class.makeCtor,
         //</debug>
     }, true, 'first');
 
-    Class.registerPreprocessor('alias', function(cls, data) {
-        //<debug>
-        Tk.classSystemMonitor && Tk.classSystemMonitor(cls, 'Tk.ClassManager#aliasPreprocessor', arguments);
-        //</debug>
-        
-        var prototype = cls.prototype,
-            xtypes = arrayFrom(data.xtype),
-            aliases = arrayFrom(data.alias),
-            widgetPrefix = 'widget.',
-            widgetPrefixLength = widgetPrefix.length,
-            xtypesChain = Array.prototype.slice.call(prototype.xtypesChain || []),
-            xtypesMap = Tk.merge({}, prototype.xtypesMap || {}),
-            i, ln, alias, xtype;
 
-        for (i = 0,ln = aliases.length; i < ln; i++) {
-            alias = aliases[i];
 
-            //<debug>
-            if (typeof alias !== 'string' || alias.length < 1) {
-                throw new Error("[Tk.define] Invalid alias of: '" + alias + "' for class: '" + name + "'; must be a valid string");
-            }
-            //</debug>
-
-            if (alias.substring(0, widgetPrefixLength) === widgetPrefix) {
-                xtype = alias.substring(widgetPrefixLength);
-                Tk.Array.include(xtypes, xtype);
-            }
-        }
-
-        cls.xtype = data.xtype = xtypes[0];
-        data.xtypes = xtypes;
-
-        for (i = 0,ln = xtypes.length; i < ln; i++) {
-            xtype = xtypes[i];
-
-            if (!xtypesMap[xtype]) {
-                xtypesMap[xtype] = true;
-                xtypesChain.push(xtype);
-            }
-        }
-
-        data.xtypesChain = xtypesChain;
-        data.xtypesMap = xtypesMap;
-
-        Tk.Function.interceptAfter(data, 'onClassCreated', function() {
-            //<debug>
-            Tk.classSystemMonitor && Tk.classSystemMonitor(cls, 'Tk.ClassManager#aliasPreprocessor#afterClassCreated', arguments);
-            //</debug>
-        
-            var mixins = prototype.mixins,
-                key, mixin;
-
-            for (key in mixins) {
-                if (mixins.hasOwnProperty(key)) {
-                    mixin = mixins[key];
-
-                    xtypes = mixin.xtypes;
-
-                    if (xtypes) {
-                        for (i = 0,ln = xtypes.length; i < ln; i++) {
-                            xtype = xtypes[i];
-
-                            if (!xtypesMap[xtype]) {
-                                xtypesMap[xtype] = true;
-                                xtypesChain.push(xtype);
-                            }
-                        }
-                    }
-                }
-            }
-        });
-
-        for (i = 0,ln = xtypes.length; i < ln; i++) {
-            xtype = xtypes[i];
-
-            //<debug>
-            if (typeof xtype !== 'string' || xtype.length < 1) {
-                throw new Error("[Tk.define] Invalid xtype of: '" + xtype + "' for class: '" + name + "'; must be a valid non-empty string");
-            }
-            //</debug>
-
-            Tk.Array.include(aliases, widgetPrefix + xtype);
-        }
-
-        data.alias = aliases;
-
-    }, ['xtype', 'alias']);
-
-    // load the cmd-5 style app manifest metadata now, if available...
-    if (Tk.manifest) {
-        var manifest = Tk.manifest,
-            classes = manifest.classes,
-            paths = manifest.paths,
-            aliases = {},
-            alternates = {},
-            className, obj, name, path, baseUrl;
-
-        if (paths) {
-            // if the manifest paths were calculated as relative to the
-            // bootstrap file, then we need to prepend Boot.baseUrl to the
-            // paths before processing
-            if (manifest.bootRelative) {
-                baseUrl = Tk.Boot.baseUrl;
-                for (path in paths) {
-                    if (paths.hasOwnProperty(path)) {
-                        paths[path] = baseUrl + paths[path];
-                    }
-                }
-            }
-            Manager.setPath(paths);
-        }
-
-        if (classes) {
-            for (className in classes) {
-                alternates[className] = [];
-                aliases[className] = [];
-                obj = classes[className];
-                if (obj.alias) {
-                    aliases[className] = obj.alias;
-                }
-                if (obj.alternates) {
-                    alternates[className] = obj.alternates;
-                }
-            }
-        }
-
-        Manager.addAlias(aliases);
-        Manager.addAlternate(alternates);
-    }
 
     return Manager;
 }(Tk.Class, Tk.Function.alias, Array.prototype.slice, Tk.Array.from, Tk.global));

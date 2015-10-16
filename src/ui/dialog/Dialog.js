@@ -10,8 +10,6 @@
  */
 (function () {
 
-	var systemDic = Dic.getCategory('ResGSystem');
-
 	Tk.define('Tk.ui.Dialog', {
 		statics: {
 			/**
@@ -26,7 +24,7 @@
 				//暂时依赖第三方
 				layer.open({
 				    type: 0, 
-				    title: options.title || systemDic.get('__gDialog_info'),
+				    title: options.title || 'info',
 				    content: options.content
 				});
 

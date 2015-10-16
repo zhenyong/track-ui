@@ -26,10 +26,6 @@ Tk.Inventory.prototype = {
     dotRe: /\./g,
     wildcardRe: /\*/g,
 
-    addAlias: function (className, alias, update) {
-        return this.addMapping(className, alias, this.aliasToName, this.nameToAliases, update);
-    },
-
     addAlternate: function (className, alternate) {
         return this.addMapping(className, alternate, this.alternateToName, this.nameToAlternates);
     },
@@ -89,15 +85,6 @@ Tk.Inventory.prototype = {
         return this.nameToAlternates[name] || null;
     },
 
-    /**
-     * Get the name of a class by its alias.
-     *
-     * @param {String} alias
-     * @return {String} className
-     */
-    getNameByAlias: function(alias) {
-        return this.aliasToName[alias] || '';
-    },
 
     /**
      * Get the name of a class by its alternate name.

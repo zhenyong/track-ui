@@ -261,18 +261,6 @@ Tk.define('Tk.Mixin', function (Mixin) { return {
 
             data.mixinId = mixinConfig.id;
 
-            //<debug>
-            if (mixinConfig.beforeHooks) {
-                Tk.raise('Use of "beforeHooks" is deprecated - use "before" instead');
-            }
-            if (mixinConfig.hooks) {
-                Tk.raise('Use of "hooks" is deprecated - use "after" instead');
-            }
-            if (mixinConfig.afterHooks) {
-                Tk.raise('Use of "afterHooks" is deprecated - use "after" instead');
-            }
-            //</debug>
-
             befores = mixinConfig.before;
             afters = mixinConfig.after;
             hooks = mixinConfig.on;

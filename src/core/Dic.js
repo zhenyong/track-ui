@@ -1,5 +1,4 @@
 /**
- * @class  Dic
  * @singleton
  * 
  * 针对现有词条结构去加载生成字典，可以自动扫描上下文词条，或者手动添加词条
@@ -166,7 +165,6 @@
 
 	//@tag Dic
 	/**
-	 * @class Dic.Category
 	 *
 	 * 一个 Category 对应一份词条对象, 例如 V5.ResGInfoState
 	 *

@@ -378,10 +378,6 @@
     });
     //</feature>
 
-    Tk.createRuleFn = function (code) {
-        return new Function('$c', 'with($c) { return (' + code + '); }');
-    };
-
     //<feature classSystem.mixins>
     /**
      * @cfg {String[]/Object} mixins
@@ -441,61 +437,5 @@
     });
     //</feature>
 
-
-    //<feature classSystem.backwardsCompatible>
-    // Backwards compatible
-    Tk.extend = function(Class, Parent, members) {
-            
-        if (arguments.length === 2 && Tk.isObject(Parent)) {
-            members = Parent;
-            Parent = Class;
-            Class = null;
-        }
-
-        var cls;
-
-        if (!Parent) {
-            throw new Error("[Tk.extend] Attempting to extend from a class which has not been loaded on the page.");
-        }
-
-        members.extend = Parent;
-        members.preprocessors = [
-            'extend'
-            //<feature classSystem.statics>
-            ,'statics'
-            //</feature>
-            //<feature classSystem.inheritableStatics>
-            ,'inheritableStatics'
-            //</feature>
-            //<feature classSystem.mixins>
-            ,'mixins'
-            //</feature>
-            //<feature classSystem.platformConfig>
-            ,'platformConfig'
-            //</feature>
-            //<feature classSystem.config>
-            ,'config'
-            //</feature>
-        ];
-
-        if (Class) {
-            cls = new ExtClass(Class, members);
-            // The 'constructor' is given as 'Class' but also needs to be on prototype
-            cls.prototype.constructor = Class;
-        } else {
-            cls = new ExtClass(members);
-        }
-
-        cls.prototype.override = function(o) {
-            for (var m in o) {
-                if (o.hasOwnProperty(m)) {
-                    this[m] = o[m];
-                }
-            }
-        };
-
-        return cls;
-    };
-    //</feature>
 
 }());

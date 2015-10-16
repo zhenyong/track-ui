@@ -7,10 +7,8 @@
  * Tk 管理的所有类都继承自 Tk.Base。
  * Tk.Base 的所有原型或静态成员都会被其他类继承
  */
-Tk.Base = (function(flexSetter) {
+Tk.Base = (function() {
     // @define Tk.Base
-    // @require Tk.Util
-    // @require Tk.Version
     // @require Tk.Configurator
     // @uses Tk.ClassManager
     var noArgs = [],
@@ -309,7 +307,8 @@ Tk.Base = (function(flexSetter) {
         },
 
         /**
-         * Override members of this class. Overridden methods can be invoked via
+         * 覆盖一个已有的一个类，调用后并不会创建新的类，只是类的属性或者方法呗覆盖。
+         * 你可以通过调用来调用被覆盖的方法
          * {@link Tk.Base#callParent}.
          *
          *     Tk.define('My.Cat', {
@@ -332,27 +331,7 @@ Tk.Base = (function(flexSetter) {
          *                               // alerts "I'm a cat!"
          *                               // alerts "Meeeeoooowwww"
          *
-         * Direct use of this method should be rare. Use {@link Tk#define Tk.define}
-         * instead:
-         *
-         *     Tk.define('My.CatOverride', {
-         *         override: 'My.Cat',
-         *         constructor: function() {
-         *             alert("I'm going to be a cat!");
-         *
-         *             this.callParent(arguments);
-         *
-         *             alert("Meeeeoooowwww");
-         *         }
-         *     });
-         *
-         * The above accomplishes the same result but can be managed by the {@link Tk.Loader}
-         * which can properly order the override and its target class and the build process
-         * can determine whether the override is needed based on the required state of the
-         * target class (My.Cat).
-         *
-         * @param {Object} members The properties to add to this class. This should be
-         * specified as an object literal containing one or more properties.
+         * @param {PlainObject} members 一组成员对象（字面量对象）
          * @return {Tk.Base} this class
          * @static
          * @inheritable
@@ -361,11 +340,10 @@ Tk.Base = (function(flexSetter) {
             var me = this,
                 statics = members.statics,
                 inheritableStatics = members.inheritableStatics,
-                config = members.config,
                 mixins = members.mixins,
                 cachedConfig = members.cachedConfig;
 
-            if (statics || inheritableStatics || config) {
+            if (statics || inheritableStatics) {
                 members = Tk.apply({}, members);
             }
 
@@ -463,7 +441,7 @@ Tk.Base = (function(flexSetter) {
                 if (key === 'mixins') {
                     // 如果两个父类使用了同一个 mixin，那么以第一个为主，后面的不考虑
                     Tk.applyIf(prototype.mixins, mixinValue);
-                } else if (!(key === 'mixinId' || key === 'config') && (prototype[key] === undefined)) {
+                } else if ((key !== 'mixinId') && (prototype[key] === undefined)) {
                     prototype[key] = mixinValue;
                 }
             }
@@ -610,6 +588,7 @@ Tk.Base = (function(flexSetter) {
         },
 
         /**
+         * 在某个方法内调用“被覆盖”的方法。包括使用 extend、override 的情况
          * Call the "parent" method of the current method. That is the method previously
          * overridden by derivation or by an override (see {@link Tk#define}).
          *
@@ -704,11 +683,11 @@ Tk.Base = (function(flexSetter) {
         },
 
         /**
-         * This method is used by an **override** to call the superclass method but 
-         * bypass any overridden method. This is often done to "patch" a method that 
-         * contains a bug but for whatever reason cannot be fixed directly.
+         * 这个方法用在 **override** A类时，直接调用 A类的 父类的方法，忽略 A 类本身定义的方法。
+         * 很少会去 override 一个类的方法，通常都是子类 extend 父类，你重载后，不想执行父类的方法
+         * 就不要掉 callParent 好了。
          * 
-         * Consider:
+         * 例子:
          * 
          *      Tk.define('Tk.some.Class', {
          *          method: function () {
@@ -727,32 +706,11 @@ Tk.Base = (function(flexSetter) {
          *              this.callParent();
          *          }
          *      });
-         * 
-         * To patch the bug in `Tk.some.DerivedClass.method`, the typical solution is to create an
-         * override:
-         * 
-         *      Tk.define('App.patches.DerivedClass', {
-         *          override: 'Tk.some.DerivedClass',
-         *          
-         *          method: function () {
-         *              console.log('Fixed');
-         * 
-         *              // ... logic but with bug fixed ...
-         *
-         *              this.callSuper();
-         *          }
-         *      });
-         * 
-         * The patch method cannot use {@link #method-callParent} to call the superclass 
-         * `method` since that would call the overridden method containing the bug. In 
-         * other words, the above patch would only produce "Fixed" then "Good" in the 
-         * console log, whereas, using `callParent` would produce "Fixed" then "Bad" 
-         * then "Good".
          *
          * @protected
-         * @param {Array/Arguments} args The arguments, either an array or the `arguments` object
-         * from the current method, for example: `this.callSuper(arguments)`
-         * @return {Object} Returns the result of calling the superclass method
+         * @param {Array/Arguments} args arguments数组, 传递到原方法中
+         * 通常会这么用: `this.callSuper(arguments)`
+         * @return {Object} Returns 父类的方法
          */
         callSuper: function(args) {
             // NOTE: this code is deliberately as few expressions (and no function calls)
@@ -793,9 +751,7 @@ Tk.Base = (function(flexSetter) {
         /**
          * @property {Tk.Class} self
          *
-         * Get the reference to the current class from which this object was instantiated. Unlike {@link Tk.Base#statics},
-         * `this.self` is scope-dependent and it's meant to be used for dynamic inheritance. See {@link Tk.Base#statics}
-         * for a detailed comparison
+         * 获取实例对应的类
          *
          *     Tk.define('My.Cat', {
          *         statics: {
@@ -902,8 +858,6 @@ Tk.Base = (function(flexSetter) {
         }
     });
 
-    BasePrototype.callOverridden = BasePrototype.callParent;
-
     return Base;
 
-}(Tk.Function.flexSetter));
+}());
