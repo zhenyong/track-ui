@@ -9,7 +9,6 @@
  */
 Tk.Base = (function() {
     // @define Tk.Base
-    // @require Tk.Configurator
     // @uses Tk.ClassManager
     var noArgs = [],
         baseStaticMember,
@@ -219,10 +218,9 @@ Tk.Base = (function() {
             var me = this, // 这个类
                 cloneFunction = Tk.Function.clone,
                 target = isStatic ? me : me.prototype,
-                defaultConfig = !isStatic && target.defaultConfig,
                 enumerables = Tk.enumerables,
                 privates = members.privates,
-                configs, i, ln, member, name, subPrivacy, privateStatics;
+                i, ln, member, name, subPrivacy, privateStatics;
 
             if (privates) {
                 // This won't run for normal class private members but will pick up all
@@ -340,8 +338,7 @@ Tk.Base = (function() {
             var me = this,
                 statics = members.statics,
                 inheritableStatics = members.inheritableStatics,
-                mixins = members.mixins,
-                cachedConfig = members.cachedConfig;
+                mixins = members.mixins;
 
             if (statics || inheritableStatics) {
                 members = Tk.apply({}, members);
@@ -844,9 +841,7 @@ Tk.Base = (function() {
         destroy: function() {
             var me = this,
                 links = me.$links;
-
-            me.initialConfig = me.config = null;
-
+                
             me.destroy = Tk.emptyFn;
             // isDestroyed added for compat reasons
             me.isDestroyed = me.destroyed = true;

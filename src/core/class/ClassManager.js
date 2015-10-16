@@ -126,607 +126,594 @@
  * @singleton
  */
 Tk.ClassManager = (function(Class, alias, arraySlice, arrayFrom, global) {
-// @define Tk.ClassManager
-// @require Tk.Inventory
-// @require Tk.Class
-// @require Tk.Function
-// @require Tk.Array
+    // @define Tk.ClassManager
+    // @require Tk.Class
+    // @require Tk.Function
+    // @require Tk.Array
 
-var makeCtor = Tk.Class.makeCtor,
-    //<if nonBrowser>
-    isNonBrowser = typeof window === 'undefined',
-    //</if>
-    nameLookupStack = [],
-    namespaceCache = {
-        Tk: {
-            name: 'Tk',
-            value: Tk // specially added for sandbox (Tk === global.Tk6)
-        }
-    },
+    var makeCtor = Tk.Class.makeCtor,
+        //<if nonBrowser>
+        isNonBrowser = typeof window === 'undefined',
+        //</if>
+        nameLookupStack = [],
+        namespaceCache = {
+            Tk: {
+                name: 'Tk',
+                value: Tk // specially added for sandbox (Tk === global.Tk6)
+            }
+        },
 
-    Manager = Tk.apply(new Tk.Inventory(), {
-        /**
-         * @property {Object} classes
-         * 存放所有定义的类映射<string类名：Class类（构造函数）>
-         * @private
-         */
-        classes: {},
-
-        classState: {
-            /*
-             * 'Tk.foo.Bar': <state enum>
-             *
-             *  10 = Tk.define called
-             *  20 = Tk.define/override called
-             *  30 = Manager.existCache[<name>] == true for define
-             *  40 = Manager.existCache[<name>] == true for define/override
-             *  50 = Manager.isCreated(<name>) == true for define
-             *  60 = Manager.isCreated(<name>) == true for define/override
-             *
+        Manager = Tk.apply({}, {
+            /**
+             * @property {Object} classes
+             * 存放所有定义的类映射<string类名：Class类（构造函数）>
+             * @private
              */
-        },
+            classes: {},
 
-        /**
-         * @private
-         */
-        existCache: {},
+            classState: {
+                /*
+                 * 'Tk.foo.Bar': <state enum>
+                 *
+                 *  10 = Tk.define called
+                 *  20 = Tk.define/override called
+                 *  30 = Manager.existCache[<name>] == true for define
+                 *  40 = Manager.existCache[<name>] == true for define/override
+                 *  50 = Manager.isCreated(<name>) == true for define
+                 *  60 = Manager.isCreated(<name>) == true for define/override
+                 *
+                 */
+            },
 
-        /** @private */
-        instantiators: [],
+            /**
+             * @private
+             */
+            existCache: {},
 
-        /**
-         * 检测一个类是否已经定义
-         *
-         * @param {String} className
-         * @return {Boolean} exist
-         */
-        isCreated: function(className) {
-            if (Manager.classes[className] || Manager.existCache[className]) {
+            /** @private */
+            instantiators: [],
+
+            /**
+             * 检测一个类是否已经定义
+             *
+             * @param {String} className
+             * @return {Boolean} exist
+             */
+            isCreated: function(className) {
+                if (Manager.classes[className] || Manager.existCache[className]) {
+                    return true;
+                }
+
+                if (!Manager.lookupName(className, false)) {
+                    return false;
+                }
+
+                Manager.triggerCreated(className);
                 return true;
-            }
+            },
 
-            if (!Manager.lookupName(className, false)) {
-                return false;
-            }
+            /**
+             * @private
+             */
+            createdListeners: [],
 
-            Manager.triggerCreated(className);
-            return true;
-        },
+            /**
+             * @private
+             */
+            nameCreatedListeners: {},
 
-        /**
-         * @private
-         */
-        createdListeners: [],
+            /**
+             * @private
+             */
+            existsListeners: [],
 
-        /**
-         * @private
-         */
-        nameCreatedListeners: {},
+            /**
+             * @private
+             */
+            nameExistsListeners: {},
 
-        /**
-         * @private
-         */
-        existsListeners: [],
+            /**
+             * @private
+             */
+            overrideMap: {},
 
-        /**
-         * @private
-         */
-        nameExistsListeners: {},
+            /**
+             * @private
+             */
+            triggerCreated: function(className, state) {
+                Manager.existCache[className] = state || 1;
+                Manager.classState[className] += 40;
+                Manager.notify(className, Manager.createdListeners, Manager.nameCreatedListeners);
+            },
 
-        /**
-         * @private
-         */
-        overrideMap: {},
+            /**
+             * @private
+             */
+            onCreated: function(fn, scope, className) {
+                Manager.addListener(fn, scope, className, Manager.createdListeners, Manager.nameCreatedListeners);
+            },
 
-        /**
-         * @private
-         */
-        triggerCreated: function (className, state) {
-            Manager.existCache[className] = state || 1;
-            Manager.classState[className] += 40;
-            Manager.notify(className, Manager.createdListeners, Manager.nameCreatedListeners);
-        },
+            /**
+             * @private
+             */
+            notify: function (className, listeners, nameListeners) {
+                var /*alternateNames = Manager.getAlternatesByName(className),
+                    */names = [className],
+                    i, ln, j, subLn, listener, name;
 
-        /**
-         * @private
-         */
-        onCreated: function(fn, scope, className) {
-            Manager.addListener(fn, scope, className, Manager.createdListeners, Manager.nameCreatedListeners);
-        },
+                for (i = 0,ln = listeners.length; i < ln; i++) {
+                    listener = listeners[i];
+                    listener.fn.call(listener.scope, className);
+                }
 
-        /**
-         * @private
-         */
-        notify: function (className, listeners, nameListeners) {
-            var alternateNames = Manager.getAlternatesByName(className),
-                names = [className],
-                i, ln, j, subLn, listener, name;
+                // while (names) {
+                    for (i = 0,ln = names.length; i < ln; i++) {
+                        name = names[i];
+                        listeners = nameListeners[name];
 
-            for (i = 0,ln = listeners.length; i < ln; i++) {
-                listener = listeners[i];
-                listener.fn.call(listener.scope, className);
-            }
-
-            while (names) {
-                for (i = 0,ln = names.length; i < ln; i++) {
-                    name = names[i];
-                    listeners = nameListeners[name];
-
-                    if (listeners) {
-                        for (j = 0,subLn = listeners.length; j < subLn; j++) {
-                            listener = listeners[j];
-                            listener.fn.call(listener.scope, name);
+                        if (listeners) {
+                            for (j = 0,subLn = listeners.length; j < subLn; j++) {
+                                listener = listeners[j];
+                                listener.fn.call(listener.scope, name);
+                            }
+                            delete nameListeners[name];
                         }
-                        delete nameListeners[name];
+                    }
+
+                //     names = alternateNames; // for 2nd pass (if needed)
+                //     alternateNames = null; // no 3rd pass
+                // }
+            },
+
+            /**
+             * @private
+             */
+            addListener: function(fn, scope, className, listeners, nameListeners) {
+                if (Tk.isArray(className)) {
+                    fn = Tk.Function.createBarrier(className.length, fn, scope);
+                    for (i = 0; i < className.length; i++) {
+                        this.addListener(fn, null, className[i], listeners, nameListeners);
+                    }
+                    return;
+                }
+                var i,
+                    listener = {
+                        fn: fn,
+                        scope: scope
+                    };
+
+                if (className) {
+                    if (this.isCreated(className)) {
+                        fn.call(scope, className);
+                        return;
+                    }
+
+                    if (!nameListeners[className]) {
+                        nameListeners[className] = [];
+                    }
+
+                    nameListeners[className].push(listener);
+                } else {
+                    listeners.push(listener);
+                }
+            },
+
+            /**
+             * Supports namespace rewriting.
+             * @private
+             */
+            $namespaceCache: namespaceCache,
+
+            /**
+             * Return the namespace cache entry for the given a class name or namespace (e.g.,
+             * "Tk.grid.Panel").
+             *
+             * @param {String} namespace The namespace or class name to lookup.
+             * @return {Object} The cache entry.
+             * @return {String} return.name The leaf name ("Panel" for "Tk.grid.Panel").
+             * @return {Object} return.parent The entry of the parent namespace (i.e., "Tk.grid").
+             * @return {Object} return.value The namespace object. This is only set for
+             * top-level namespace entries to support renaming them for sandboxing ("Tk6" vs
+             * "Tk").
+             * @since 6.0.0
+             * @private
+             */
+            getNamespaceEntry: function(namespace) {
+                if (typeof namespace !== 'string') {
+                    return namespace; // assume we've been given an entry object
+                }
+
+                var entry = namespaceCache[namespace],
+                    i;
+
+                if (!entry) {
+                    i = namespace.lastIndexOf('.');
+
+                    if (i < 0) {
+                        entry = {
+                            name: namespace
+                        };
+                    } else {
+                        entry = {
+                            name: namespace.substring(i + 1),
+                            parent: Manager.getNamespaceEntry(namespace.substring(0, i))
+                        };
+                    }
+
+                    namespaceCache[namespace] = entry;
+                }
+
+                return entry;
+            },
+
+            /**
+             * Return the value of the given "dot path" name. This supports remapping (for use
+             * in sandbox builds) as well as auto-creating of namespaces.
+             *
+             * @param {String} namespace The name of the namespace or class.
+             * @param {Boolean} [autoCreate] Pass `true` to create objects for undefined names.
+             * @return {Object} The object that is the namespace or class name.
+             * @since 6.0.0
+             * @private
+             */
+            lookupName: function(namespace, autoCreate) {
+                var entry = Manager.getNamespaceEntry(namespace),
+                    scope = Tk.global,
+                    i = 0,
+                    e, parent;
+
+                // Put entries on the stack in reverse order: [ 'Panel', 'grid', 'Tk' ]
+                for (e = entry; e; e = e.parent) {
+                    // since we process only what we add to the array, and that always
+                    // starts at index=0, we don't need to clean up the array (that would
+                    // just encourage the GC to do something pointless).
+                    nameLookupStack[i++] = e;
+                }
+
+                while (scope && i-- > 0) {
+                    // We'll process entries in top-down order ('Tk', 'grid' then 'Panel').
+                    e = nameLookupStack[i];
+                    parent = scope;
+
+                    scope = e.value || scope[e.name];
+
+                    if (!scope && autoCreate) {
+                        parent[e.name] = scope = {};
                     }
                 }
 
-                names = alternateNames; // for 2nd pass (if needed)
-                alternateNames = null; // no 3rd pass
-            }
-        },
+                return scope;
+            },
 
-        /**
-         * @private
-         */
-        addListener: function(fn, scope, className, listeners, nameListeners) {
-            if (Tk.isArray(className)) {
-                fn = Tk.Function.createBarrier(className.length, fn, scope);
-                for (i = 0; i < className.length; i++) {
-                    this.addListener(fn, null, className[i], listeners, nameListeners);
+            /**
+             * 创建一个命名空间，设置值
+             *
+             *     Tk.ClassManager.setNamespace('MyCompany.pkg.Example', someObject);
+             *
+             *     alert(MyCompany.pkg.Example === someObject); // alerts true
+             *
+             * @param {String} name
+             * @param {Object} value
+             */
+            setNamespace: function(namespace, value) {
+                var entry = Manager.getNamespaceEntry(namespace),
+                    scope = Tk.global;
+
+                if (entry.parent) {
+                    scope = Manager.lookupName(entry.parent, true);
                 }
-                return;
-            }
-            var i,
-                listener = {
-                    fn: fn,
-                    scope: scope
-                };
 
-            if (className) {
-                if (this.isCreated(className)) {
-                    fn.call(scope, className);
+                scope[entry.name] = value;
+
+                return value;
+            },
+
+            /**
+             * 设置一个字符串类名（命名空间）映射到一个类
+             *
+             * @param {String} name
+             * @param {Object} value
+             * @return {Tk.ClassManager} this
+             */
+            set: function(name, value) {
+                var targetName = Manager.getName(value);
+
+                Manager.classes[name] = Manager.setNamespace(name, value);
+
+                return Manager;
+            },
+
+            /**
+             * 通过字符串类名获得类
+             *
+             * @param {String} name
+             * @return {Tk.Class} class
+             */
+            get: function(name) {
+                return Manager.classes[name] || Manager.lookupName(name, false);
+            },
+
+            /**
+             * 通过类或者示例获得字符串类名
+             * 通常这么用 {@link Tk#getClassName}.
+             *
+             *     Tk.ClassManager.getName(Tk.Action); // returns "Tk.Action"
+             *
+             * @param {Tk.Class/Object} object
+             * @return {String} className
+             */
+            getName: function(object) {
+                return object && object.$className || '';
+            },
+
+            /**
+             * 通过示例获得类，如果不是一个 Tk 管理的类示例则返回 null
+             * 通常这么用 {@link Tk#getClass}.
+             *
+             *     var component = new Tk.Component();
+             *
+             *     Tk.getClass(component); // returns Tk.Component
+             *
+             * @param {Object} object
+             * @return {Tk.Class} class
+             */
+            getClass: function(object) {
+                return object && object.self || null;
+            },
+
+            /**
+             * 定义一个类
+             * @deprecated Use {@link Tk#define} instead, as that also supports creating overrides.
+             * @private
+             */
+            create: function(className, data, createdFn) {
+                //<debug>
+                //警告 classname 不合法
+                //</debug>
+
+                var ctor = makeCtor(className);
+                if (typeof data === 'function') {
+                    data = data(ctor);
+                }
+
+                //<debug>
+                //TODO 警告重复
+                //</debug>
+
+                data.$className = className;
+
+                return new Class(ctor, data, function() {
+                    var postprocessorStack = data.postprocessors || Manager.defaultPostprocessors,
+                        registeredPostprocessors = Manager.postprocessors,
+                        postprocessors = [],
+                        postprocessor, i, ln, j, subLn, postprocessorProperties, postprocessorProperty;
+
+                    delete data.postprocessors;
+
+                    for (i = 0, ln = postprocessorStack.length; i < ln; i++) {
+                        postprocessor = postprocessorStack[i];
+
+                        if (typeof postprocessor === 'string') {
+                            postprocessor = registeredPostprocessors[postprocessor];
+                            postprocessorProperties = postprocessor.properties;
+
+                            if (postprocessorProperties === true) {
+                                postprocessors.push(postprocessor.fn);
+                            } else if (postprocessorProperties) {
+                                for (j = 0, subLn = postprocessorProperties.length; j < subLn; j++) {
+                                    postprocessorProperty = postprocessorProperties[j];
+
+                                    if (data.hasOwnProperty(postprocessorProperty)) {
+                                        postprocessors.push(postprocessor.fn);
+                                        break;
+                                    }
+                                }
+                            }
+                        } else {
+                            postprocessors.push(postprocessor);
+                        }
+                    }
+
+                    data.postprocessors = postprocessors;
+                    data.createdFn = createdFn;
+                    Manager.processCreate(className, this, data);
+                });
+            },
+
+            processCreate: function(className, cls, clsData) {
+                var me = this,
+                    postprocessor = clsData.postprocessors.shift(),
+                    createdFn = clsData.createdFn;
+
+                if (!postprocessor) {
+                    if (className) {
+                        me.set(className, cls);
+                    }
+
+                    delete cls._classHooks;
+
+                    if (createdFn) {
+                        createdFn.call(cls, cls);
+                    }
+
+                    if (className) {
+                        me.triggerCreated(className);
+                    }
                     return;
                 }
 
-                if (!nameListeners[className]) {
-                    nameListeners[className] = [];
+                if (postprocessor.call(me, className, cls, clsData, me.processCreate) !== false) {
+                    me.processCreate(className, cls, clsData);
                 }
+            },
 
-                nameListeners[className].push(listener);
-            }
-            else {
-                listeners.push(listener);
-            }
-        },
+            createOverride: function(className, data, createdFn) {
+                var me = this,
+                    overriddenClassName = data.override,
+                    uses = data.uses,
+                    mixins = data.mixins,
+                    mixinsIsArray,
+                    compat = 1, // default if 'compatibility' is not specified
+                    depedenciesLoaded,
+                    classReady = function() {
+                        var cls, i, key, temp;
 
-        /**
-         * Supports namespace rewriting.
-         * @private
-         */
-        $namespaceCache: namespaceCache,
-
-        /**
-         * Return the namespace cache entry for the given a class name or namespace (e.g.,
-         * "Tk.grid.Panel").
-         *
-         * @param {String} namespace The namespace or class name to lookup.
-         * @return {Object} The cache entry.
-         * @return {String} return.name The leaf name ("Panel" for "Tk.grid.Panel").
-         * @return {Object} return.parent The entry of the parent namespace (i.e., "Tk.grid").
-         * @return {Object} return.value The namespace object. This is only set for
-         * top-level namespace entries to support renaming them for sandboxing ("Tk6" vs
-         * "Tk").
-         * @since 6.0.0
-         * @private
-         */
-        getNamespaceEntry: function (namespace) {
-            if (typeof namespace !== 'string') {
-                return namespace;  // assume we've been given an entry object
-            }
-
-            var entry = namespaceCache[namespace],
-                i;
-
-            if (!entry) {
-                i = namespace.lastIndexOf('.');
-
-                if (i < 0) {
-                    entry = {
-                        name: namespace
-                    };
-                } else {
-                    entry = {
-                        name: namespace.substring(i + 1),
-                        parent: Manager.getNamespaceEntry(namespace.substring(0, i))
-                    };
-                }
-
-                namespaceCache[namespace] = entry;
-            }
-
-            return entry;
-        },
-
-        /**
-         * Return the value of the given "dot path" name. This supports remapping (for use
-         * in sandbox builds) as well as auto-creating of namespaces.
-         *
-         * @param {String} namespace The name of the namespace or class.
-         * @param {Boolean} [autoCreate] Pass `true` to create objects for undefined names.
-         * @return {Object} The object that is the namespace or class name.
-         * @since 6.0.0
-         * @private
-         */
-        lookupName: function (namespace, autoCreate) {
-            var entry = Manager.getNamespaceEntry(namespace),
-                scope = Tk.global,
-                i = 0,
-                e, parent;
-
-            // Put entries on the stack in reverse order: [ 'Panel', 'grid', 'Tk' ]
-            for (e = entry; e; e = e.parent) {
-                // since we process only what we add to the array, and that always
-                // starts at index=0, we don't need to clean up the array (that would
-                // just encourage the GC to do something pointless).
-                nameLookupStack[i++] = e;
-            }
-
-            while (scope && i-- > 0) {
-                // We'll process entries in top-down order ('Tk', 'grid' then 'Panel').
-                e = nameLookupStack[i];
-                parent = scope;
-
-                scope = e.value || scope[e.name];
-
-                if (!scope && autoCreate) {
-                    parent[e.name] = scope = {};
-                }
-            }
-
-            return scope;
-        },
-
-        /**
-         * 创建一个命名空间，设置值
-         *
-         *     Tk.ClassManager.setNamespace('MyCompany.pkg.Example', someObject);
-         *
-         *     alert(MyCompany.pkg.Example === someObject); // alerts true
-         *
-         * @param {String} name
-         * @param {Object} value
-         */
-        setNamespace: function (namespace, value) {
-            var entry = Manager.getNamespaceEntry(namespace),
-                scope = Tk.global;
-
-            if (entry.parent) {
-                scope = Manager.lookupName(entry.parent, true);
-            }
-
-            scope[entry.name] = value;
-
-            return value;
-        },
-
-        /**
-         * 设置一个字符串类名（命名空间）映射到一个类
-         *
-         * @param {String} name
-         * @param {Object} value
-         * @return {Tk.ClassManager} this
-         */
-        set: function (name, value) {
-            var targetName = Manager.getName(value);
-
-            Manager.classes[name] = Manager.setNamespace(name, value);
-
-            if (targetName && targetName !== name) {
-                Manager.addAlternate(targetName, name);
-            }
-
-            return Manager;
-        },
-
-        /**
-         * 通过字符串类名获得类
-         *
-         * @param {String} name
-         * @return {Tk.Class} class
-         */
-        get: function(name) {
-            return Manager.classes[name] || Manager.lookupName(name, false);
-        },
-
-        /**
-         * 通过类或者示例获得字符串类名
-         * 通常这么用 {@link Tk#getClassName}.
-         *
-         *     Tk.ClassManager.getName(Tk.Action); // returns "Tk.Action"
-         *
-         * @param {Tk.Class/Object} object
-         * @return {String} className
-         */
-        getName: function(object) {
-            return object && object.$className || '';
-        },
-
-        /**
-         * 通过示例获得类，如果不是一个 Tk 管理的类示例则返回 null
-         * 通常这么用 {@link Tk#getClass}.
-         *
-         *     var component = new Tk.Component();
-         *
-         *     Tk.getClass(component); // returns Tk.Component
-         *
-         * @param {Object} object
-         * @return {Tk.Class} class
-         */
-        getClass: function(object) {
-            return object && object.self || null;
-        },
-
-        /**
-         * 定义一个类
-         * @deprecated Use {@link Tk#define} instead, as that also supports creating overrides.
-         * @private
-         */
-        create: function(className, data, createdFn) {
-            //<debug>
-            //警告 classname 不合法
-            //</debug>
-
-            var ctor = makeCtor(className);
-            if (typeof data === 'function') {
-                data = data(ctor);
-            }
-
-            //<debug>
-            //TODO 警告重复
-            //</debug>
-
-            data.$className = className;
-
-            return new Class(ctor, data, function() {
-                var postprocessorStack = data.postprocessors || Manager.defaultPostprocessors,
-                    registeredPostprocessors = Manager.postprocessors,
-                    postprocessors = [],
-                    postprocessor, i, ln, j, subLn, postprocessorProperties, postprocessorProperty;
-
-                delete data.postprocessors;
-
-                for (i = 0,ln = postprocessorStack.length; i < ln; i++) {
-                    postprocessor = postprocessorStack[i];
-
-                    if (typeof postprocessor === 'string') {
-                        postprocessor = registeredPostprocessors[postprocessor];
-                        postprocessorProperties = postprocessor.properties;
-
-                        if (postprocessorProperties === true) {
-                            postprocessors.push(postprocessor.fn);
-                        }
-                        else if (postprocessorProperties) {
-                            for (j = 0,subLn = postprocessorProperties.length; j < subLn; j++) {
-                                postprocessorProperty = postprocessorProperties[j];
-
-                                if (data.hasOwnProperty(postprocessorProperty)) {
-                                    postprocessors.push(postprocessor.fn);
-                                    break;
+                        // transform mixin class names into class references, This
+                        // loop can handle both the array and object forms of
+                        // mixin definitions
+                        if (mixinsIsArray) {
+                            for (i = 0, temp = mixins.length; i < temp; ++i) {
+                                if (Tk.isString(cls = mixins[i])) {
+                                    mixins[i] = Tk.ClassManager.get(cls);
+                                }
+                            }
+                        } else if (mixins) {
+                            for (key in mixins) {
+                                if (Tk.isString(cls = mixins[key])) {
+                                    mixins[key] = Tk.ClassManager.get(cls);
                                 }
                             }
                         }
-                    }
-                    else {
-                        postprocessors.push(postprocessor);
-                    }
-                }
 
-                data.postprocessors = postprocessors;
-                data.createdFn = createdFn;
-                Manager.processCreate(className, this, data);
-            });
-        },
+                        // The target class and the required classes for this override are
+                        // ready, so we can apply the override now:
+                        cls = me.get(overriddenClassName);
 
-        processCreate: function(className, cls, clsData){
-            var me = this,
-                postprocessor = clsData.postprocessors.shift(),
-                createdFn = clsData.createdFn;
+                        // We don't want to apply these:
+                        delete data.override;
+                        delete data.compatibility;
+                        delete data.uses;
 
-            if (!postprocessor) {
-                //<debug>
-                Tk.classSystemMonitor && Tk.classSystemMonitor(className, 'Tk.ClassManager#classCreated', arguments);
-                //</debug>
+                        Tk.override(cls, data);
 
-                if (className) {
-                    me.set(className, cls);
-                }
-
-                delete cls._classHooks;
-
-                if (createdFn) {
-                    createdFn.call(cls, cls);
-                }
-
-                if (className) {
-                    me.triggerCreated(className);
-                }
-                return;
-            }
-
-            if (postprocessor.call(me, className, cls, clsData, me.processCreate) !== false) {
-                me.processCreate(className, cls, clsData);
-            }
-        },
-
-        createOverride: function (className, data, createdFn) {
-            var me = this,
-                overriddenClassName = data.override,
-                uses = data.uses,
-                mixins = data.mixins,
-                mixinsIsArray,
-                compat = 1, // default if 'compatibility' is not specified
-                depedenciesLoaded,
-                classReady = function () {
-                    var cls, i, key, temp;
-
-                    // transform mixin class names into class references, This
-                    // loop can handle both the array and object forms of
-                    // mixin definitions
-                    if (mixinsIsArray) {
-                        for (i = 0, temp = mixins.length; i < temp; ++i) {
-                            if (Tk.isString(cls = mixins[i])) {
-                                mixins[i] = Tk.ClassManager.get(cls);
-                            }
+                        if (createdFn) {
+                            createdFn.call(cls, cls); // last but not least!
                         }
-                    } else if (mixins) {
-                        for (key in mixins) {
-                            if (Tk.isString(cls = mixins[key])) {
-                                mixins[key] = Tk.ClassManager.get(cls);
-                            }
-                        }
+                    };
+
+                Manager.overrideMap[className] = true;
+
+                // If specified, parse strings as versions, but otherwise treat as a
+                // boolean (maybe "compatibility: Tk.isIE8" or something).
+                //
+                if ('compatibility' in data && Tk.isString(compat = data.compatibility)) {
+                    compat = Tk.checkVersion(compat);
+                }
+
+                if (compat) {
+                    // Override the target class right after it's created
+                    me.onCreated(classReady, me, overriddenClassName);
+                }
+
+                me.triggerCreated(className, 2);
+                return me;
+            },
+
+
+            /**
+             * @private
+             * @param length
+             */
+            getInstantiator: function(length) {
+                var instantiators = this.instantiators,
+                    instantiator,
+                    i,
+                    args;
+
+                instantiator = instantiators[length];
+
+                if (!instantiator) {
+                    i = length;
+                    args = [];
+
+                    for (i = 0; i < length; i++) {
+                        args.push('a[' + i + ']');
                     }
 
-                    // The target class and the required classes for this override are
-                    // ready, so we can apply the override now:
-                    cls = me.get(overriddenClassName);
+                    instantiator = instantiators[length] = new Function('c', 'a', 'return new c(' + args.join(',') + ')');
+                    //<debug>
+                    instantiator.name = "Tk.create" + length;
+                    //</debug>
+                }
 
-                    // We don't want to apply these:
-                    delete data.override;
-                    delete data.compatibility;
-                    delete data.uses;
+                return instantiator;
+            },
 
-                    Tk.override(cls, data);
+            /**
+             * @private
+             */
+            postprocessors: {},
 
-                    if (createdFn) {
-                        createdFn.call(cls, cls); // last but not least!
-                    }
+            /**
+             * @private
+             */
+            defaultPostprocessors: [],
+
+            /**
+             * 注册类定义的“后处理器”
+             *
+             * @private
+             * @param {String} name
+             * @param {Function} postprocessor
+             */
+            registerPostprocessor: function(name, fn, properties, position, relativeTo) {
+                if (!position) {
+                    position = 'last';
+                }
+
+                if (!properties) {
+                    properties = [name];
+                }
+
+                this.postprocessors[name] = {
+                    name: name,
+                    properties: properties || false,
+                    fn: fn
                 };
 
-            Manager.overrideMap[className] = true;
+                this.setDefaultPostprocessorPosition(name, position, relativeTo);
 
-            // If specified, parse strings as versions, but otherwise treat as a
-            // boolean (maybe "compatibility: Tk.isIE8" or something).
-            //
-            if ('compatibility' in data && Tk.isString(compat = data.compatibility)) {
-                compat = Tk.checkVersion(compat);
-            }
+                return this;
+            },
 
-            if (compat) {
-                // Override the target class right after it's created
-                me.onCreated(classReady, me, overriddenClassName);
-            }
+            /**
+             * 用于调整“后处理器”的执行顺序
+             *
+             * @private
+             * @param {String} name “后处理器”的名字，针对通过
+             * {@link Tk.ClassManager#registerPostprocessor} 注册的处理器
+             * @param {String} offset 执行位置，四种值
+             * 'first', 'last', or: 'before', 'after' (位置相对于第三个参数)
+             * @param {String} relativeName
+             * @return {Tk.ClassManager} this
+             */
+            setDefaultPostprocessorPosition: function(name, offset, relativeName) {
+                var defaultPostprocessors = this.defaultPostprocessors,
+                    index;
 
-            me.triggerCreated(className, 2);
-            return me;
-        },
+                if (typeof offset === 'string') {
+                    if (offset === 'first') {
+                        defaultPostprocessors.unshift(name);
 
+                        return this;
+                    } else if (offset === 'last') {
+                        defaultPostprocessors.push(name);
 
-        /**
-         * @private
-         * @param length
-         */
-        getInstantiator: function(length) {
-            var instantiators = this.instantiators,
-                instantiator,
-                i,
-                args;
+                        return this;
+                    }
 
-            instantiator = instantiators[length];
-
-            if (!instantiator) {
-                i = length;
-                args = [];
-
-                for (i = 0; i < length; i++) {
-                    args.push('a[' + i + ']');
+                    offset = (offset === 'after') ? 1 : -1;
                 }
 
-                instantiator = instantiators[length] = new Function('c', 'a', 'return new c(' + args.join(',') + ')');
-                //<debug>
-                instantiator.name = "Tk.create" + length;
-                //</debug>
-            }
+                index = Tk.Array.indexOf(defaultPostprocessors, relativeName);
 
-            return instantiator;
-        },
-
-        /**
-         * @private
-         */
-        postprocessors: {},
-
-        /**
-         * @private
-         */
-        defaultPostprocessors: [],
-
-        /**
-         * 注册类定义的“后处理器”
-         *
-         * @private
-         * @param {String} name
-         * @param {Function} postprocessor
-         */
-        registerPostprocessor: function(name, fn, properties, position, relativeTo) {
-            if (!position) {
-                position = 'last';
-            }
-
-            if (!properties) {
-                properties = [name];
-            }
-
-            this.postprocessors[name] = {
-                name: name,
-                properties: properties || false,
-                fn: fn
-            };
-
-            this.setDefaultPostprocessorPosition(name, position, relativeTo);
-
-            return this;
-        },
-
-        /**
-         * 用于调整“后处理器”的执行顺序
-         *
-         * @private
-         * @param {String} name “后处理器”的名字，针对通过
-         * {@link Tk.ClassManager#registerPostprocessor} 注册的处理器
-         * @param {String} offset 执行位置，四种值
-         * 'first', 'last', or: 'before', 'after' (位置相对于第三个参数)
-         * @param {String} relativeName
-         * @return {Tk.ClassManager} this
-         */
-        setDefaultPostprocessorPosition: function(name, offset, relativeName) {
-            var defaultPostprocessors = this.defaultPostprocessors,
-                index;
-
-            if (typeof offset === 'string') {
-                if (offset === 'first') {
-                    defaultPostprocessors.unshift(name);
-
-                    return this;
-                }
-                else if (offset === 'last') {
-                    defaultPostprocessors.push(name);
-
-                    return this;
+                if (index !== -1) {
+                    Tk.Array.splice(defaultPostprocessors, Math.max(0, index + offset), 0, name);
                 }
 
-                offset = (offset === 'after') ? 1 : -1;
+                return this;
             }
-
-            index = Tk.Array.indexOf(defaultPostprocessors, relativeName);
-
-            if (index !== -1) {
-                Tk.Array.splice(defaultPostprocessors, Math.max(0, index + offset), 0, name);
-            }
-
-            return this;
-        }
-    });
+        });
 
 
     /**
@@ -762,118 +749,31 @@ var makeCtor = Tk.Class.makeCtor,
     Manager.registerPostprocessor('singleton', function(name, cls, data, fn) {
         if (data.singleton) {
             fn.call(this, name, new cls(), data);
-        }
-        else {
+        } else {
             return true;
         }
         return false;
     });
     //</feature>
 
-    /**
-     * @cfg {Object} debugHooks
-     * A collection of diagnostic methods to decorate the real methods of the class. These
-     * methods are applied as an `override` if this class has debug enabled as defined by
-     * `Tk.isDebugEnabled`.
-     *
-     * These will be automatically removed by the Sencha Cmd compiler for production builds.
-     *
-     * Example usage:
-     *
-     *      Tk.define('Foo.bar.Class', {
-     *          foo: function (a, b, c) {
-     *              ...
-     *          },
-     *
-     *          bar: function (a, b) {
-     *              ...
-     *              return 42;
-     *          },
-     *
-     *          debugHooks: {
-     *              foo: function (a, b, c) {
-     *                  // check arguments...
-     *                  return this.callParent(arguments);
-     *              }
-     *          }
-     *      });
-     *
-     * If you specify a `$enabled` property in the `debugHooks` object that will be used
-     * as the default enabled state for the hooks. If the `{@link Tk#manifest}` contains
-     * a `debug` object of if `{@link Tk#debugConfig}` is specified, the `$enabled` flag
-     * will override its "*" value.
-     */
-    Manager.registerPostprocessor('debugHooks', function(name, Class, data) {
-        //<debug>
-        Tk.classSystemMonitor && Tk.classSystemMonitor(Class, 'Tk.Class#debugHooks', arguments);
-
-        if (Tk.isDebugEnabled(Class.$className, data.debugHooks.$enabled)) {
-            delete data.debugHooks.$enabled;
-            Tk.override(Class, data.debugHooks);
-        }
-        //</debug>
-
-        // may already have an instance here in the case of singleton
-        var target = Class.isInstance ? Class.self : Class;
-
-        delete target.prototype.debugHooks;
-    });
-
     Tk.apply(Tk, {
         /**
-         * Instantiate a class by either full name, alias or alternate name.
+         * 通过类名创建一个实例:
          *
-         * If {@link Tk.Loader} is {@link Tk.Loader#setConfig enabled} and the class has
-         * not been defined yet, it will attempt to load the class via synchronous loading.
-         *
-         * For example, all these three lines return the same result:
-         *
-         *      // xtype
-         *      var window = Tk.create({
-         *          xtype: 'window',
-         *          width: 600,
-         *          height: 800,
-         *          ...
-         *      });
-         *
-         *      // alias
-         *      var window = Tk.create('widget.window', {
-         *          width: 600,
-         *          height: 800,
-         *          ...
-         *      });
-         *
-         *      // alternate name
-         *      var window = Tk.create('Tk.Window', {
-         *          width: 600,
-         *          height: 800,
-         *          ...
-         *      });
-         *
-         *      // full class name
          *      var window = Tk.create('Tk.window.Window', {
          *          width: 600,
          *          height: 800,
          *          ...
          *      });
          *
-         *      // single object with xclass property:
-         *      var window = Tk.create({
-         *          xclass: 'Tk.window.Window', // any valid value for 'name' (above)
-         *          width: 600,
-         *          height: 800,
-         *          ...
-         *      });
          *
-         * @param {String} [name] The class name or alias. Can be specified as `xclass`
-         * property if only one object parameter is specified.
-         * @param {Object...} [args] Additional arguments after the name will be passed to
-         * the class' constructor.
+         * @param {String} [name] 类名
+         * @param {Object...} [args] 作为类构造函数的参数
          * @return {Object} instance
          * @member Tk
          * @method create
          */
-        create: function () {
+        create: function() {
             var name = arguments[0],
                 nameType = typeof name,
                 args = arraySlice.call(arguments, 1),
@@ -892,7 +792,7 @@ var makeCtor = Tk.Class.makeCtor,
                     }
                 }
 
-                name = Manager.resolveName(name);
+                // name = Manager.resolveName(name);
                 cls = Manager.get(name);
             }
 
@@ -975,14 +875,11 @@ var makeCtor = Tk.Class.makeCtor,
          *
          * 使用 `override` 覆盖一个类并不会产生一个新的类，只是原来的类被改造了。
          *
-         * @param {String} className The class name to create in string dot-namespaced format, for example:
-         * 'My.very.awesome.Class', 'FeedViewer.plugin.CoolPager'
-         * It is highly recommended to follow this simple convention:
-         *  - The root and the class name are 'CamelCased'
-         *  - Everything else is lower-cased
-         * Pass `null` to create an anonymous class.
-         * @param {Object} data The key - value pairs of properties to apply to this class. Property names can be of any valid
-         * strings, except those in the reserved listed below:
+         * @param {String} className 类名，建议用点分开, 例如:
+         * 'My.very.awesome.Class'
+         *  - 根部和类名用驼峰命名，其他部分用小写
+         *  传  `null` 则匿名类
+         * @param {Object} data 键-值 对象表示类的成员. 下面是一些关键字，不能使用:
          *  
          *  - {@link Tk.Class#cfg-extend extend}
          *  - {@link Tk.Class#cfg-inheritableStatics inheritableStatics}
@@ -996,7 +893,7 @@ var makeCtor = Tk.Class.makeCtor,
          * @return {Tk.Base}
          * @member Tk
          */
-        define: function (className, data, createdFn) {
+        define: function(className, data, createdFn) {
             if (data.override) {
                 Manager.classState[className] = 20;
                 return Manager.createOverride.apply(Manager, arguments);
@@ -1014,7 +911,7 @@ var makeCtor = Tk.Class.makeCtor,
         getClassName: alias(Manager, 'getName'),
 
         /**
-         * Returns the displayName property or className or object. When all else fails, returns "Anonymous".
+         * 返回类或者示例的名称，便于调试
          * @param {Object} object
          * @return {String}
          */
@@ -1044,28 +941,28 @@ var makeCtor = Tk.Class.makeCtor,
         getClass: alias(Manager, 'getClass'),
 
         /**
-         * Creates namespaces to be used for scoping variables and classes so that they are not global.
-         * Specifying the last node of a namespace implicitly creates all other nodes. Usage:
+         * 创建命名空间，用法:
          *
-         *     Tk.namespace('Company', 'Company.data');
+         *     Tk.namespace('root', 'root.a');
          *
-         *     // equivalent and preferable to the above syntax
-         *     Tk.ns('Company.data');
+         *     // 等同于
+         *     Tk.namespace('root.a');
+         *     Tk.ns('root.a');
          *
-         *     Company.Widget = function() { ... };
+         *     如果 window.root.a 原来有值，那么啥事都没发生，否则 window.root.a 初始化为 {}
          *
          *     Company.data.CustomStore = function(config) { ... };
          *
          * @param {String...} namespaces
-         * @return {Object} The (last) namespace object created.
+         * @return {Object} 命名空间最后一级对应的对象
          * @member Tk
          * @method namespace
          */
-        namespace: function () {
+        namespace: function() {
             var root = global,
                 i;
 
-            for (i = arguments.length; i-- > 0; ) {
+            for (i = arguments.length; i-- > 0;) {
                 root = Manager.lookupName(arguments[i], true);
             }
 
@@ -1074,7 +971,7 @@ var makeCtor = Tk.Class.makeCtor,
     });
 
     /**
-     * Convenient alias for {@link Tk#namespace Tk.namespace}.
+     * 相当于 {@link Tk#namespace Tk.namespace}.
      * @inheritdoc Tk#namespace
      * @member Tk
      * @method ns
@@ -1084,18 +981,8 @@ var makeCtor = Tk.Class.makeCtor,
     Class.registerPreprocessor('className', function(cls, data) {
         if ('$className' in data) {
             cls.$className = data.$className;
-            //<debug>
-            cls.displayName = cls.$className;
-            //</debug>
         }
-        
-        //<debug>
-        Tk.classSystemMonitor && Tk.classSystemMonitor(cls, 'Tk.ClassManager#classNamePreprocessor', arguments);
-        //</debug>
     }, true, 'first');
-
-
-
 
     return Manager;
 }(Tk.Class, Tk.Function.alias, Array.prototype.slice, Tk.Array.from, Tk.global));

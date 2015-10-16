@@ -1,12 +1,10 @@
 /**
- * This class is a base class for mixins. These are classes that extend this class and are
- * designed to be used as a `mixin` by user code.
+ * 作为混合 mixins 用法的基础部分
  *
- * It provides mixins with the ability to "hook" class methods of the classes in to which
- * they are mixed. For example, consider the `destroy` method pattern. If a mixin class
- * had cleanup requirements, it would need to be called as part of `destroy`.
- * 
- * Starting with a basic class we might have:
+ * 可以让被混合的类，在主体类调用某个方法的前后可以拦截做一些事情，例如在主体类的 destroy 
+ * 方法调用后，混合类能自动清理自身资源
+ *
+ * 例如，你设计一个基类：
  * 
  *      Tk.define('Foo.bar.Base', {
  *          destroy: function () {
@@ -15,7 +13,7 @@
  *          }
  *      });
  *
- * A derived class would look like this:
+ * 子类:
  *
  *      Tk.define('Foo.bar.Derived', {
  *          extend: 'Foo.bar.Base',
@@ -24,13 +22,12 @@
  *              console.log('D');
  *              // more cleanup
  *
- *              this.callParent(); // let Foo.bar.Base cleanup as well
+ *              this.callParent(); // 子类销毁后，也要调用父类的销毁
  *          }
  *      });
  *
- * To see how using this class help, start with a "normal" mixin class that also needs to
- * cleanup its resources. These mixins must be called explicitly by the classes that use
- * them. For example:
+ * 如果混合一个别的类，那么当前类销毁时，怎么让被混合的资源也一起销毁呢
+ * 你可能会这样：
  * 
  *      Tk.define('Foo.bar.Util', {
  *          destroy: function () {
@@ -47,26 +44,24 @@
  *
  *          destroy: function () {
  *              console.log('D');
- *              // more cleanup
+ *              // 清理父类和混合的资源
  *
- *              this.mixins.util.destroy.call(this);
+ *              this.mixins.util.destroy.call(this);//手动调用混合类的销毁
  *
- *              this.callParent(); // let Foo.bar.Base cleanup as well
+ *              this.callParent(); // 让父类清理资源
  *          }
  *      });
  *
  *      var obj = new Foo.bar.Derived();
  *
  *      obj.destroy();
- *      // logs D then U then B
+ *      //打印 D -> U -> B
  *
- * This class is designed to solve the above in simpler and more reliable way.
+ * Mixin 这个类就是为了解决这种手动清理混合资源而生
  *
  * ## mixinConfig
  * 
- * Using `mixinConfig` the mixin class can provide "before" or "after" hooks that do not
- * involve the derived class implementation. This also means the derived class cannot
- * adjust parameters to the hook methods.
+ * 被混合的类配置 `mixinConfig` 提供 "before" 和 "after" 钩子函数.
  * 
  *      Tk.define('Foo.bar.Util', {
  *          extend: 'Tk.Mixin',
@@ -95,9 +90,9 @@
  *      var obj = new Foo.bar.Derived();
  *
  *      obj.destroy();
- *      // logs D then U
+ *      // 打印 D -> U
  * 
- *  If the destruction should occur in the other order, you can use `before`:
+ *  使用 `before`:
  * 
  *      Tk.define('Foo.bar.Util', {
  *          extend: 'Tk.Mixin',
@@ -126,13 +121,12 @@
  *      var obj = new Foo.bar.Derived();
  *
  *      obj.destroy();
- *      // logs U then D
+ *      // 打印 U -> D
  *
  * ### Chaining
  *
- * One way for a mixin to provide methods that act more like normal inherited methods is
- * to use an `on` declaration. These methods will be injected into the `callParent` chain
- * between the derived and superclass. For example:
+ * 如果你让mixin的类的方法能像父类一样，通过 `callParent` 就能一并清理，那么可以用
+ *  `on` 声明. 对应的方法会挂到 `callParent` 的执行链中（在父类的方法前）
  *
  *      Tk.define('Foo.bar.Util', {
  *          extend: 'Tk.Mixin',
@@ -168,9 +162,9 @@
  *      var obj = new Foo.bar.Derived();
  *
  *      obj.destroy();
- *      // logs M then B then D
+ *      // 打印 M -> B -> D
  *
- * As with `before` and `after`, the value of `on` can be a method name.
+ * `before`  `after` `on` 可以用自身方法名表示
  *
  *      Tk.define('Foo.bar.Util', {
  *          extend: 'Tk.Mixin',
@@ -191,16 +185,14 @@
  *
  * ### Derivations
  *
- * Some mixins need to process class extensions of their target class. To do this you can
- * define an `extended` method like so:
- *
+ * 有时候，混合类需要在宿主类被继承的时候做一些事情：
+ * 
  *      Tk.define('Foo.bar.Util', {
  *          extend: 'Tk.Mixin',
  *
  *          mixinConfig: {
  *              extended: function (baseClass, derivedClass, classBody) {
- *                  // This function is called whenever a new "derivedClass" is created
- *                  // that extends a "baseClass" in to which this mixin was mixed.
+ *                  // 如果某个父类混合了 Foo.bar.Util,那么当父类被继承的时候，这个方法就会执行
  *              }
  *          }
  *      });
